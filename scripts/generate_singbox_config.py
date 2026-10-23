@@ -245,6 +245,105 @@ def _parse_hysteria2(url):
 
     return out
 
+def _parse_hysteria(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not server:
+        raise ValueError('hysteria missing server')
+
+    out = {
+        'type': 'hysteria',
+        'tag': 'proxy',
+        'server': server,
+        'server_port': port,
+    }
+
+    auth = params.get('auth') or params.get('auth_str') or params.get('auth-str')
+    if auth:
+        out['auth_str'] = auth
+    for src, dst in (('upmbps', 'up_mbps'), ('downmbps', 'down_mbps')):
+        value = params.get(src)
+        if value:
+            try:
+                out[dst] = int(float(value))
+            except ValueError:
+                pass
+    if params.get('obfs'):
+        out['obfs'] = params['obfs']
+
+    tls = {'enabled': True}
+    server_name = params.get('peer') or params.get('sni')
+    if server_name:
+        tls['server_name'] = server_name
+    insecure = _bool_param(params.get('insecure') or params.get('allowInsecure'))
+    if insecure is not None:
+        tls['insecure'] = insecure
+    alpn = _split_list(params.get('alpn'))
+    if alpn:
+        tls['alpn'] = alpn
+    out['tls'] = tls
+
+    return out
+
+def _parse_tuic(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    uuid = urllib.parse.unquote(parsed.username or '')
+    password = urllib.parse.unquote(parsed.password or '')
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not uuid or not server:
+        raise ValueError('tuic missing uuid/server')
+
+    out = {
+        'type': 'tuic',
+        'tag': 'proxy',
+        'server': server,
+        'server_port': port,
+        'uuid': uuid,
+        'password': password,
+    }
+
+    congestion = params.get('congestion_control') or params.get('congestion-controller')
+    if congestion:
+        out['congestion_control'] = congestion
+    relay_mode = params.get('udp_relay_mode') or params.get('udp-relay-mode')
+    if relay_mode:
+        out['udp_relay_mode'] = relay_mode
+
+    tls_params = dict(params)
+    tls_params['security'] = 'tls'
+    if not tls_params.get('allowInsecure') and params.get('allow_insecure'):
+        tls_params['allowInsecure'] = params['allow_insecure']
+    out['tls'] = _build_tls(tls_params, server_name_hint=server) or {'enabled': True}
+
+    return out
+
+def _parse_anytls(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    password = urllib.parse.unquote(parsed.username or '')
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not password or not server:
+        raise ValueError('anytls missing password/server')
+
+    out = {
+        'type': 'anytls',
+        'tag': 'proxy',
+        'server': server,
+        'server_port': port,
+        'password': password,
+    }
+
+    tls = _build_tls(params, server_name_hint=server)
+    if tls:
+        out['tls'] = tls
+
+    return out
+
 def build_outbound(url):
     url = _sanitize_url(url)
     scheme = urllib.parse.urlparse(url).scheme.lower()
@@ -258,6 +357,12 @@ def build_outbound(url):
         return _parse_ss(url)
     if scheme == 'hysteria2':
         return _parse_hysteria2(url)
+    if scheme == 'hysteria':
+        return _parse_hysteria(url)
+    if scheme == 'tuic':
+        return _parse_tuic(url)
+    if scheme == 'anytls':
+        return _parse_anytls(url)
     raise ValueError(f'unsupported protocol: {scheme}')
 
 def build_config(outbound, http_port, socks_port, log_level):

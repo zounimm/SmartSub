@@ -16,6 +16,7 @@ from urllib.parse import quote, urlencode, urlparse
 from pre_check import pre_check, get_sub_all
 from utils import is_safe_url, mask_sensitive_data
 from verify_subscription import verify_subscription_file
+from clash_parser import clash_yaml_to_links
 
 class SubscriptionCollector:
     def __init__(self):
@@ -48,7 +49,8 @@ class SubscriptionCollector:
         # 4. 正则表达式
         self.re_str = r"https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]"
         # 更全面的节点 URL 正则（兼容 RFC 3986，防止参数截断）
-        self.node_str = r'(?:vmess|ss|trojan|vless|hysteria2)://[-a-zA-Z0-9+/=@#?&._%[\]:~!*();,]+'
+        # 抓取阶段不限制协议：项目不支持的协议也会进入 all_nodes.txt，供外部自行筛选
+        self.node_str = r'(?:vmess|vless|trojan-go|trojan|ssr|ss|hysteria2|hy2|hysteria|tuic|anytls|snell|socks5|socks|wireguard|wg|ssh|juicity|mieru|brook)://[-a-zA-Z0-9+/=@#?&._%[\]:~!*();,]+'
         self.check_node_url_str = "https://{}/sub?target={}&url={}&insert=false&config=config%2FACL4SSR.ini"
         # 5. 配置参数 (默认值)
         self.max_workers = 32
@@ -311,6 +313,8 @@ class SubscriptionCollector:
             url_list = [u for u in url_list if is_safe_url(u)]
             # 2. 提取直接节点
             direct_nodes = re.findall(self.node_str, data)
+            # Clash / Mihomo YAML 内容转成分享链接
+            direct_nodes.extend(clash_yaml_to_links(data))
             if direct_nodes:
                 node_list.extend(direct_nodes)
                 logger.info(f'{mask_sensitive_data(url)}\t发现 {len(direct_nodes)} 个直接节点')
@@ -328,7 +332,10 @@ class SubscriptionCollector:
             logger.error(f'{mask_sensitive_data(url)}\t数据解析失败: {type(e).__name__} - {str(e)}')
         return url_list
     def filter_base64(self, text):
-        ss = ['ss://', 'vmess://', 'trojan://', 'vless://', 'hysteria2://']
+        ss = ['ss://', 'ssr://', 'vmess://', 'vless://', 'trojan://', 'trojan-go://',
+              'hysteria://', 'hysteria2://', 'hy2://', 'tuic://', 'anytls://',
+              'snell://', 'socks://', 'socks5://', 'wireguard://', 'wg://',
+              'ssh://', 'juicity://', 'mieru://', 'brook://']
         for i in ss:
             if i in text:
                 return True
@@ -463,12 +470,17 @@ class SubscriptionCollector:
                     self.quality_stats['total_checked'] += 1
                 # 解析节点并加入全局去重池
                 nodes = self.extract_nodes(text)
+                clash_links = clash_yaml_to_links(text)
+                if clash_links:
+                    nodes.extend(clash_links)
                 if nodes:
                     with self.lock:
                         self.unique_nodes.update(nodes)
                 # Clash 判断
                 try:
                     if 'proxies:' in text:
+                        if clash_links:
+                            logger.info(f'{mask_sensitive_data(url)}\tClash 订阅解析出 {len(clash_links)} 个节点')
                         if not self.validate_subscription_quality(url, text, is_clash=True):
                             bar.update(1)
                             return
@@ -563,35 +575,12 @@ class SubscriptionCollector:
     def save_collected_nodes(self):
         if not self.collected_nodes_set:
             return
-        old_nodes = set()
-        if os.path.exists(self.collected_nodes_path):
-            try:
-                with open(self.collected_nodes_path, 'r', encoding='utf-8') as f:
-                    old_nodes = set(f.read().splitlines())
-            except MemoryError:
-                logger.error('读取 collected_nodes.txt 时发生 MemoryError，正在重置文件...')
-                try:
-                    backup_path = self.collected_nodes_path + '.bak'
-                    os.rename(self.collected_nodes_path, backup_path)
-                    logger.warning(f'原文件已备份至: {backup_path}')
-                except Exception as e:
-                    logger.error(f'备份失败: {e}')
-                old_nodes = set()
-            except Exception as e:
-                logger.warning(f'读取已采集节点失败: {e}')
-        all_nodes = old_nodes | self.collected_nodes_set
-        # 严格过滤无效节点 (必须包含 :// 且长度 > 15)
-        all_nodes = {node for node in all_nodes if '://' in node and len(node) > 15}
-        # 限制文件大小
-        nodes_limit = float('inf')
-        if len(all_nodes) > nodes_limit:
-            logger.info(f'节点总数 ({len(all_nodes)}) 超过限制 ({nodes_limit})，执行随机采样清理...')
-            # 随机保留指定数量，防止文件过大
-            all_nodes = set(random.sample(list(all_nodes), nodes_limit))
+        # 每轮覆盖：只保留本轮网页抓取到的节点
+        all_nodes = {node for node in self.collected_nodes_set if '://' in node and len(node) > 15}
         try:
             with open(self.collected_nodes_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(sorted(all_nodes)))
-            logger.info(f'已保存 {len(self.collected_nodes_set)} 个新节点到 {self.collected_nodes_path} (当前总数: {len(all_nodes)})')
+            logger.info(f'已保存 {len(all_nodes)} 个节点到 {self.collected_nodes_path} (覆盖写入)')
         except Exception as e:
             logger.error(f'保存节点文件失败: {e}')
     def sub_update(self, url_list, path_yaml):
@@ -793,7 +782,7 @@ class SubscriptionCollector:
             f.write(write_str)
         self.write_url_config(url_file, play_url_list, 'loon')
         self.write_url_config(url_file, sub_url_list, 'clash')
-    def write_merge_files(self, yaml_file):
+    def write_merge_files(self):
         """生成合并后的文件"""
         # 1. 汇总所有节点
         final_nodes = list(self.unique_nodes) # 包含从订阅中解析的所有节点
@@ -806,12 +795,12 @@ class SubscriptionCollector:
         path_merge = os.path.join(self.base_dir, 'sub_merge.txt')
         with open(path_merge, 'w', encoding='utf-8') as f:
             f.write(content_merge)
-        # 5. 写入 _url_check.txt (同样使用去重后的节点集合，满足用户需求)
-        # 注意：这里我们使用 yaml_file 的路径来确定 _url_check.txt 的位置，或者直接覆盖
-        abs_path_yaml = self.get_abs_path(yaml_file)
-        url_check_path = abs_path_yaml.replace('.yaml','_url_check.txt')
-        with open(url_check_path, 'w', encoding='utf-8') as f:
+        # 5. 写入 sub/all_nodes.txt (本轮全量节点快照，未筛选，供外部自行测试/筛选)
+        all_nodes_path = os.path.join(self.base_dir, 'sub', 'all_nodes.txt')
+        os.makedirs(os.path.dirname(all_nodes_path), exist_ok=True)
+        with open(all_nodes_path, 'w', encoding='utf-8') as f:
             f.write(content_merge)
+        logger.info(f'全量节点已写入 sub/all_nodes.txt ({len(final_nodes)} 个)')
         # 6. 写入 base64 版本
         path_base64 = os.path.join(self.base_dir, 'sub_merge_base64.txt')
         with open(path_base64, 'w', encoding='utf-8') as f:
@@ -901,7 +890,7 @@ class SubscriptionCollector:
             self.sub_update(merge_url_list, all_yaml)
             self.write_sub_store(all_yaml)
             self.verify_subscription_outputs()
-            self.write_merge_files(all_yaml)
+            self.write_merge_files()
             # 3. Notification
             runtime = time.time() - start_time
             runtime_str = f"{int(runtime // 60)}分{int(runtime % 60)}秒"

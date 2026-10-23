@@ -21,7 +21,7 @@ python scripts/self_check.py
 ```
 
 - 检查 `config.yaml` 是否存在与格式是否正确  
-- 检查协议范围（仅允许 vmess/ss/trojan/vless/hysteria2）  
+- 检查协议范围（允许 vmess/ss/trojan/vless/hysteria2/hysteria/tuic/anytls）  
 - 提示订阅源重复条目
 
 ---
@@ -60,7 +60,7 @@ export HTTPS_PROXY="http://127.0.0.1:7890"
 ## 节点筛选结果为 0
 
 常见原因：
-1) `collected_nodes.txt` 或 `sub/sub_all_url_check.txt` 为空  
+1) `collected_nodes.txt` 或 `sub/all_nodes.txt` 为空  
 2) `quality_filter.max_latency` 太低  
 3) CN 测试代理失败且 `cn_test_proxy.required=true`
 

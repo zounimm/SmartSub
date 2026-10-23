@@ -14,7 +14,7 @@ SmartSub 旨在为您提供最纯净、稳定的代理体验。它能自动遍�
 
 ### 🌐 全方位抓取
 - ✅ **多源采集**：自动聚合 Telegram 频道、GitHub 仓库、直连 URL 及网页模糊抓取
-- ✅ **智能提取**：深度解析页面内容，自动识别 `vmess://`, `ss://`, `trojan://`, `vless://`, `hysteria2://` 等协议
+- ✅ **智能提取**：深度解析页面内容，自动识别 `vmess://`, `ss://`, `trojan://`, `vless://`, `hysteria2://`, `hysteria://`, `tuic://`, `anytls://` 等协议，并支持把 Clash/Mihomo YAML 订阅的 `proxies` 转换成节点
 - ✅ **去重机制**：基于 MD5 和节点参数的智能去重，消除重复订阅
 - ✅ **GitHub 用户去重**：同一 GitHub 用户的多个订阅链接仅保留一个，减少噪音
 - ✅ **安全防护**：内置 SSRF 防护机制，防止恶意请求内网地址
@@ -39,7 +39,7 @@ SmartSub 旨在为您提供最纯净、稳定的代理体验。它能自动遍�
 ### ⚡ 高性能架构
 - ✅ **极速并发**：内置 32 线程池，秒级处理成百上千个订阅源
 - ✅ **智能采样**：针对超大规模节点库（5000+），采用智能采样算法，兼顾速度与质量
-- ✅ **五协议支持**：仅保留 vmess, ss, trojan, vless, hysteria2
+- ✅ **八协议支持**：保留 vmess, ss, trojan, vless, hysteria2, hysteria, tuic, anytls
 
 ### ⚙️ 自动化部署
 - ✅ **GitHub Actions 集成**：7×24 小时无人值守自动更新
@@ -284,7 +284,7 @@ subconverter_backends:
 |------|------|
 | `sub_merge.txt` | **推荐** 通用聚合订阅（明文），包含所有链接和节点 |
 | `sub_merge_base64.txt` | **推荐** 通用聚合订阅（Base64），可直接作为订阅链接使用 |
-| `collected_nodes.txt` | 抓取到的所有直连/裸节点（实时更新，限制 10k 条） |
+| `collected_nodes.txt` | 本轮网页抓取到的直连/裸节点（每轮覆盖） |
 | `failed_subscriptions.log` | 失效订阅记录（可审查/恢复） |
 
 ### `sub/` 目录文件
@@ -295,6 +295,7 @@ subconverter_backends:
 | `sub_all_loon.txt` | **Loon订阅文件（Base64编码，可直接导入）** ✅ |
 | `sub_all_sub_store.txt` | Sub-Store 专用格式（区分机场与开心玩耍） |
 | `YYYY/MM/D-DD.yaml` | 按日期归档的每日抓取结果 |
+| `sub/all_nodes.txt` | ⭐ **全量节点快照**（抓取完立即生成，未筛选，含项目未支持的协议，可自行下载测试） |
 | `sub/high_quality_nodes.txt` | ⭐ **高质量筛选节点**（经过连通性、延迟、IP风险检测） |
 | `runtime/quality_report.json` | 节点质量分析报告（包含统计数据） |
 

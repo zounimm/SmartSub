@@ -4,7 +4,7 @@ import os
 import sys
 import yaml
 
-ALLOWED_PROTOCOLS = {'vmess', 'ss', 'trojan', 'vless', 'hysteria2'}
+ALLOWED_PROTOCOLS = {'vmess', 'ss', 'trojan', 'vless', 'hysteria2', 'hysteria', 'tuic', 'anytls'}
 
 def warn(msg):
     print(f'WARN: {msg}')

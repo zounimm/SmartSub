@@ -96,7 +96,9 @@ class NodeQualityFilter:
 
         self.input_file_collected = os.path.join(self.base_dir, 'collected_nodes.txt')  # 裸节点源
 
-        self.input_file_all = os.path.join(self.base_dir, 'sub', 'sub_all_url_check.txt')  # 完整URL源
+        self.input_file_all = os.path.join(self.base_dir, 'sub', 'all_nodes.txt')  # 全量节点源
+
+        self.input_file_all_legacy = os.path.join(self.base_dir, 'sub', 'sub_all_url_check.txt')  # 旧版路径
 
         # 输出文件放在 sub 文件夹
 
@@ -144,11 +146,17 @@ class NodeQualityFilter:
 
             'hysteria2': 10,
 
+            'tuic': 9,
+
             'vless': 9,
+
+            'anytls': 8,
 
             'trojan': 8,
 
             'vmess': 7,
+
+            'hysteria': 7,
 
             'ss': 6
 
@@ -156,7 +164,7 @@ class NodeQualityFilter:
 
         # 首选协议列表
 
-        self.preferred_protocols = ['hysteria2', 'vless', 'trojan', 'vmess', 'ss']
+        self.preferred_protocols = ['hysteria2', 'tuic', 'vless', 'anytls', 'trojan', 'vmess', 'hysteria', 'ss']
 
         # CN probe defaults (optional)
 
@@ -244,7 +252,7 @@ class NodeQualityFilter:
 
         self.dynamic_probe_node = None
 
-        self.dynamic_probe_supported_protocols = ['vless', 'trojan', 'vmess', 'ss', 'hysteria2']
+        self.dynamic_probe_supported_protocols = ['vless', 'trojan', 'vmess', 'ss', 'hysteria2', 'hysteria', 'tuic', 'anytls']
 
         # CN test proxy (optional)
 
@@ -1112,11 +1120,11 @@ class NodeQualityFilter:
 
                 node_info.update(self._parse_ss(node_url))
 
-            elif protocol in ['trojan', 'vless']:
+            elif protocol in ['trojan', 'vless', 'tuic', 'anytls']:
 
                 node_info.update(self._parse_trojan_vless(node_url))
 
-            elif protocol in ['hysteria2']:
+            elif protocol in ['hysteria2', 'hysteria']:
 
                 node_info.update(self._parse_hysteria(node_url))
 
@@ -1144,7 +1152,7 @@ class NodeQualityFilter:
 
             return None
 
-        allow_insecure = get_param('allowInsecure', 'allowinsecure', 'insecure')
+        allow_insecure = get_param('allowInsecure', 'allowinsecure', 'insecure', 'allow_insecure')
 
         if isinstance(allow_insecure, str):
 
@@ -1796,33 +1804,35 @@ class NodeQualityFilter:
 
         nodes = []
 
-        input_source = None
+        input_path = None
 
-        if os.path.exists(self.input_file_all):
+        for candidate in (self.input_file_all, self.input_file_all_legacy, self.input_file_collected):
 
-            logger.info(f'📂 从 sub_all_url_check.txt 读取节点...')
+            if os.path.exists(candidate):
 
-            with open(self.input_file_all, 'r', encoding='utf-8') as f:
+                input_path = candidate
 
-                nodes = [line.strip() for line in f if line.strip() and '://'in line]
+                break
 
-            input_source = 'sub_all_url_check.txt'
-
-        elif os.path.exists(self.input_file_collected):
-
-            logger.info(f'📂 从 collected_nodes.txt 读取节点...')
-
-            with open(self.input_file_collected, 'r', encoding='utf-8') as f:
-
-                nodes = [line.strip() for line in f if line.strip()]
-
-            input_source = 'collected_nodes.txt'
-
-        else:
+        if input_path is None:
 
             logger.error(f'❌ 未找到输入文件！')
 
             return
+
+        input_source = os.path.basename(input_path)
+
+        logger.info(f'📂 从 {input_source} 读取节点...')
+
+        with open(input_path, 'r', encoding='utf-8') as f:
+
+            if input_path == self.input_file_collected:
+
+                nodes = [line.strip() for line in f if line.strip()]
+
+            else:
+
+                nodes = [line.strip() for line in f if line.strip() and '://'in line]
 
         logger.info(f'📥 从 {input_source} 读取到 {len(nodes)} 个节点')
 

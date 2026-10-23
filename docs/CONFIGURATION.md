@@ -1,7 +1,7 @@
 # 配置参数详解
 
-本文档完整说明 `config.yaml` 的所有主要参数与推荐值。项目仅支持 5 种协议：
-`vmess / ss / trojan / vless / hysteria2`。
+本文档完整说明 `config.yaml` 的所有主要参数与推荐值。项目支持 8 种协议：
+`vmess / ss / trojan / vless / hysteria2 / hysteria / tuic / anytls`。
 
 ---
 
@@ -45,9 +45,12 @@ nodes:
     - trojan
     - vless
     - hysteria2
+    - hysteria
+    - tuic
+    - anytls
 ```
 
-说明：仅允许上述 5 种协议，其它协议会被忽略。
+说明：仅允许上述 8 种协议，其它协议会被忽略。
 
 ---
 
@@ -109,9 +112,12 @@ quality_filter:
 
   preferred_protocols:
     - hysteria2
+    - tuic
     - vless
+    - anytls
     - trojan
     - vmess
+    - hysteria
     - ss
 ```
 
@@ -262,6 +268,9 @@ dynamic_probe:
     - vmess
     - ss
     - hysteria2
+    - hysteria
+    - tuic
+    - anytls
   save_path: runtime/probe_head.json
 ```
 

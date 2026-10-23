@@ -16,24 +16,25 @@ trojan://5a2c16f9@104.26.1.110
 vmess://ew0KICAidiI6I...
 ```
 
-**数量**: ~327 个（限制10k条）
+**数量**: 每轮不同，取决于本轮网页抓取量
+
+**写入方式**: **每轮覆盖**，只保留本轮抓到的节点，不做跨轮累积
 
 ---
 
-### 2. sub/sub_all_url_check.txt (完整URL文件) ⭐推荐
-**来源**: `main.py` **完整运行**后生成的**所有筛选过的URL**（包括订阅链接和节点）
+### 2. sub/all_nodes.txt (全量节点文件) ⭐推荐
+**来源**: `main.py` **完整运行**后生成，**每轮覆盖**（只保留本轮抓到的节点，上一轮的历史节点不会保留）
 
-**内容**: 包含：
-- 订阅链接（https://...）
-- 节点链接（vless://, vmess://, trojan://...）
-- 已经过质量控制筛选
+**内容**: 每行一个节点链接，**不限制协议**——除了 `vmess/vless/trojan/ss/hysteria2/hysteria/tuic/anytls`，还包括 `ssr/snell/socks5/wireguard/ssh` 等本项目筛选器暂不支持的协议，方便自行下载后用自己的工具测试。
 
-**数量**: ~29,455 个（4MB+）
+**数量**: 10 万级别（20MB+）
 
-**优势**:
-- ✅ 数据更全面（订阅+节点）
-- ✅ 已经过 `main.py` 的质量控制
-- ✅ 包含更多节点源
+**用途**: 可直接通过 raw 链接下载，在任意客户端/脚本里自行测试和筛选
+
+**写入逻辑**: 本轮订阅节点 ∪ 本轮网页抓取节点 → set 去重 → 排序 → 整体覆盖写入。去重是「字符串完全相等」，同一节点不同备注会各留一条。
+
+> 注意：`node_quality_filter.py` 只处理它认识的 8 种协议，其余协议在筛选阶段会被跳过，但仍会完整保留在 `all_nodes.txt` 里。
+> 旧文件名 `sub/sub_all_url_check.txt` 已废弃，`node_quality_filter.py` 仍兼容读取。
 
 ---
 
@@ -41,8 +42,9 @@ vmess://ew0KICAidiI6I...
 
 ### 读取优先级
 ```
-1. 优先读取: sub/sub_all_url_check.txt  (完整URL列表)
-2. 备用读取: collected_nodes.txt        (裸节点列表)
+1. 优先读取: sub/all_nodes.txt          (全量节点)
+2. 兼容读取: sub/sub_all_url_check.txt  (旧文件名)
+3. 备用读取: collected_nodes.txt        (裸节点列表)
 ```
 
 ### 输出位置
@@ -63,9 +65,9 @@ runtime/quality_report.json    # 质量分析报告
 ### 工作流程
 ```
 Telegram频道 + 网页  →  main.py  →  collected_nodes.txt (裸节点)
-                                   →  sub_all_url_check.txt (完整URL)
+                                   →  sub/all_nodes.txt   (全量节点)
 
-sub_all_url_check.txt  →  node_quality_filter.py  →  sub/high_quality_nodes.txt
+sub/all_nodes.txt  →  node_quality_filter.py  →  sub/high_quality_nodes.txt
 ```
 
 ---
@@ -75,5 +77,5 @@ sub_all_url_check.txt  →  node_quality_filter.py  →  sub/high_quality_nodes.
 | 文件 | 生成方式 | 内容 | 推荐用途 |
 |------|---------|------|----------|
 | `collected_nodes.txt` | main.py网页抓取 | 裸节点 | 直接抓取的节点 |
-| `sub/sub_all_url_check.txt` | main.py完整运行 | 订阅+节点 | 质量筛选输入 ⭐ |
+| `sub/all_nodes.txt` | main.py完整运行 | 全量节点 | 自行测试/筛选 ⭐ |
 | `sub/high_quality_nodes.txt` | node_quality_filter.py | 高质量节点 | 最终使用 ⭐⭐ |

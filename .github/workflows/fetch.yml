@@ -80,6 +80,25 @@ jobs:
       run: |
         python ./main.py || echo "⚠️ main.py 执行遇到错误，但继续执行"
 
+    - name: Publish all nodes (early snapshot)
+      # 抓取完成后立刻把全量节点推到仓库，不必等后面的质量筛选跑完
+      if: success() || failure()
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add ./sub/all_nodes.txt || true
+        # 旧文件名已被 sub/all_nodes.txt 取代
+        if [ -f "sub/all_nodes.txt" ]; then
+          git rm -q --ignore-unmatch sub/sub_all_url_check.txt || true
+        fi
+        if git diff --staged --quiet; then
+          echo "📝 全量节点无变更，跳过提交"
+        else
+          git commit -m "📦 全量节点快照 $(date '+%Y-%m-%d %H:%M:%S')"
+          git pull --rebase --autostash origin main || true
+          git push origin HEAD:main || echo "⚠️ 全量节点推送失败，将在流程结束时重试"
+        fi
+
     - name: Select dynamic probe head (optional)
       if: success() || failure()
       run: |
@@ -192,7 +211,7 @@ jobs:
         GIST_ID: ${{ secrets.GIST_ID }}
       run: |
         # 检查是否有节点可以筛选
-        if [ -f "sub/sub_all_url_check.txt" ] || [ -f "collected_nodes.txt" ]; then
+        if [ -f "sub/all_nodes.txt" ] || [ -f "sub/sub_all_url_check.txt" ] || [ -f "collected_nodes.txt" ]; then
           echo "✅ 发现节点文件，开始筛选..."
           python ./node_quality_filter.py || echo "⚠️ 节点筛选遇到错误"
 

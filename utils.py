@@ -215,7 +215,7 @@ def extract_protocol_from_url(url):
 
     # 支持的协议列表
 
-    supported_protocols = ['vmess', 'ss', 'trojan', 'vless', 'hysteria2']
+    supported_protocols = ['vmess', 'ss', 'trojan', 'vless', 'hysteria2', 'hysteria', 'tuic', 'anytls']
 
     if protocol in supported_protocols:
 

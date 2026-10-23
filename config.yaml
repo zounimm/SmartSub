@@ -18,6 +18,9 @@ nodes:
     - trojan
     - vless
     - hysteria2
+    - hysteria
+    - tuic
+    - anytls
 
 # Telegram 频道配置
 tgchannel:
@@ -246,9 +249,12 @@ quality_filter:
   # 首选协议列表(优先级从高到低)
   preferred_protocols:
     - hysteria2
+    - tuic
     - vless
+    - anytls
     - trojan
     - vmess
+    - hysteria
     - ss
 
 # CN probe integration (optional). Provide a JSON result file or URL.
@@ -274,6 +280,9 @@ dynamic_probe:
     - vmess
     - ss
     - hysteria2
+    - hysteria
+    - tuic
+    - anytls
   save_path: runtime/probe_head.json
 
 # CN test proxy (optional)

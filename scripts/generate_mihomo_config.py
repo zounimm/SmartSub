@@ -279,6 +279,110 @@ def _parse_hysteria2(url):
         proxy['obfs-password'] = obfs_password
     return proxy
 
+def _parse_hysteria(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not server:
+        raise ValueError('hysteria missing server')
+
+    proxy = {
+        'name': 'probe',
+        'type': 'hysteria',
+        'server': server,
+        'port': port
+    }
+
+    auth = _get_param(params, 'auth', 'auth_str', 'auth-str')
+    if auth:
+        proxy['auth-str'] = auth
+    up = _get_param(params, 'upmbps', 'up')
+    down = _get_param(params, 'downmbps', 'down')
+    if up:
+        proxy['up'] = f'{up} Mbps'
+    if down:
+        proxy['down'] = f'{down} Mbps'
+    sni = _get_param(params, 'peer', 'sni')
+    if sni:
+        proxy['sni'] = sni
+    skip = _bool_param(_get_param(params, 'insecure', 'allowInsecure'))
+    if skip is not None:
+        proxy['skip-cert-verify'] = skip
+    alpn = _split_list(_get_param(params, 'alpn'))
+    if alpn:
+        proxy['alpn'] = alpn
+    obfs = _get_param(params, 'obfs')
+    if obfs:
+        proxy['obfs'] = obfs
+    return proxy
+
+def _parse_tuic(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    uuid = urllib.parse.unquote(parsed.username or '')
+    password = urllib.parse.unquote(parsed.password or '')
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not uuid or not server:
+        raise ValueError('tuic missing uuid/server')
+
+    proxy = {
+        'name': 'probe',
+        'type': 'tuic',
+        'server': server,
+        'port': port,
+        'uuid': uuid,
+        'password': password,
+        'udp': True
+    }
+
+    sni = _get_param(params, 'sni')
+    if sni:
+        proxy['sni'] = sni
+    alpn = _split_list(_get_param(params, 'alpn'))
+    if alpn:
+        proxy['alpn'] = alpn
+    congestion = _get_param(params, 'congestion_control', 'congestion-controller')
+    if congestion:
+        proxy['congestion-controller'] = congestion
+    relay_mode = _get_param(params, 'udp_relay_mode', 'udp-relay-mode')
+    if relay_mode:
+        proxy['udp-relay-mode'] = relay_mode
+    skip = _bool_param(_get_param(params, 'allow_insecure', 'allowInsecure', 'insecure'))
+    if skip is not None:
+        proxy['skip-cert-verify'] = skip
+    return proxy
+
+def _parse_anytls(url):
+    parsed = urllib.parse.urlparse(url)
+    params = _parse_query(parsed.query)
+    password = urllib.parse.unquote(parsed.username or '')
+    server = parsed.hostname
+    port = parsed.port or 443
+    if not password or not server:
+        raise ValueError('anytls missing password/server')
+
+    proxy = {
+        'name': 'probe',
+        'type': 'anytls',
+        'server': server,
+        'port': port,
+        'password': password,
+        'udp': True
+    }
+
+    sni = _get_param(params, 'sni')
+    if sni:
+        proxy['sni'] = sni
+    skip = _bool_param(_get_param(params, 'allowInsecure', 'insecure'))
+    if skip is not None:
+        proxy['skip-cert-verify'] = skip
+    client_fp = _get_param(params, 'fp', 'client-fingerprint')
+    if client_fp:
+        proxy['client-fingerprint'] = client_fp
+    return proxy
+
 def build_proxy(url):
     url = _sanitize_url(url)
     scheme = urllib.parse.urlparse(url).scheme.lower()
@@ -292,6 +396,12 @@ def build_proxy(url):
         return _parse_ss(url)
     if scheme == 'hysteria2':
         return _parse_hysteria2(url)
+    if scheme == 'hysteria':
+        return _parse_hysteria(url)
+    if scheme == 'tuic':
+        return _parse_tuic(url)
+    if scheme == 'anytls':
+        return _parse_anytls(url)
     raise ValueError(f'unsupported protocol: {scheme}')
 
 def build_config(proxy, mixed_port, log_level):
