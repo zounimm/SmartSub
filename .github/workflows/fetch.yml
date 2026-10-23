@@ -181,7 +181,7 @@ jobs:
     - name: Run Quality Filter & Push to Telegram
       # 只在有节点文件时才运行筛选
       if: success() || failure()  # 即使main.py失败也尝试筛选
-      timeout-minutes: 20  # 单步超时限制（防止IP检测或测试过多导致超时）
+      # timeout-minutes: 20  # 单步超时限制（防止IP检测或测试过多导致超时）
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
