@@ -1,12 +1,12 @@
 ﻿# 性能配置
 performance:
   max_workers: 32              # 最大并发线程数（根据机器性能调整）
-  content_limit_mb: 10          # 下载内容大小限制（MB）
+  content_limit_mb: 20          # 下载内容大小限制（MB）
   request_timeout: 50           # 请求超时时间（秒）
 
 # 质量控制配置
 quality_control:
-  min_nodes: 3                 # 订阅最少节点数（少于此数量视为低质量）
+  min_nodes: 1                 # 订阅最少节点数（少于此数量视为低质量）
   enable_duplicate_check: true # 启用内容去重（消除重复订阅）
   enable_quality_check: true   # 启用质量检查（过滤空订阅和垃圾内容）
 
