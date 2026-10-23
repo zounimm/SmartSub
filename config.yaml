@@ -243,9 +243,9 @@ quality_filter:
   min_speed: 0                 # 最小下载速度(KB/s)，0表示不测速
 
   # 大规模节点处理配置 - 精选高质量方案
-  max_test_nodes: 5000         # 最多测试节点数
-  max_output_nodes: 300        # 输出150个精选节点
-  min_guarantee: 50           # 保底150个节点
+  max_test_nodes: 200000         # 最多测试节点数
+  max_output_nodes: 300        # 输出300个精选节点
+  min_guarantee: 50           # 保底50个节点
   preferred_protocols_only: true  # 测试所有协议
   smart_sampling: true         # 智能采样
 
