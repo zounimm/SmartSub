@@ -6,7 +6,7 @@ on:
 
   schedule:
     # 每4小时跑一次
-    - cron: '0 */4 * * *' 
+    - cron: '0 */6 * * *' 
       timezone: 'Asia/Shanghai'
       # - cron: '0 20 * * *' # 北京时间凌晨4点 (UTC 20:00)
   # watch:
