@@ -50,6 +50,38 @@ from loguru import logger
 
 from tqdm import tqdm
 
+class _RatePacer:
+
+    """限制请求发起的最小间隔(秒)，interval<=0 表示不限制"""
+
+    def __init__(self, interval):
+
+        self.interval = max(0.0, float(interval or 0))
+
+        self._lock = asyncio.Lock()
+
+        self._next_at = 0.0
+
+    async def wait(self):
+
+        if self.interval <= 0:
+
+            return
+
+        async with self._lock:
+
+            now = time.monotonic()
+
+            delay = self._next_at - now
+
+            if delay > 0:
+
+                await asyncio.sleep(delay)
+
+                now = time.monotonic()
+
+            self._next_at = now + self.interval
+
 class NodeQualityFilter:
 
     def __init__(self, config_path='config.yaml'):
@@ -145,6 +177,10 @@ class NodeQualityFilter:
         self.cn_probe_results = {}
 
         self.cn_probe_matched = 0
+
+        # IP 风险检测配置 (由 config.yaml 的 ip_risk_check 覆盖)
+
+        self.ip_risk_config = {}
 
         # Risk/phishing filter defaults (optional)
 
@@ -310,7 +346,7 @@ class NodeQualityFilter:
 
                 if self.ip_risk_config['enabled']:
 
-                    logger.info(f'🛡️ IP风险检测已开启 (Top {self.ip_risk_config["check_top_nodes"]})')
+                    logger.info(f'🛡️ IP风险检测已开启 (Top {self.ip_risk_config["check_top_nodes"]}, 并发={self.ip_risk_config.get("max_workers", 8)})')
 
                 # 读取区域限制配置
 
@@ -2370,6 +2406,8 @@ class NodeQualityFilter:
 
         2. ipapi (免Key，通过ISP类型判断风险)
 
+        并发数/请求间隔由 config.yaml 的 ip_risk_check 配置
+
         """
 
         if not self.ip_risk_config.get('enabled', False):
@@ -2379,6 +2417,8 @@ class NodeQualityFilter:
         provider = self.ip_risk_config.get('provider', 'abuseipdb')
 
         max_check = self.ip_risk_config.get('check_top_nodes', sys.maxsize)
+
+        api_key = None
 
         # AbuseIPDB 检查
 
@@ -2398,117 +2438,69 @@ class NodeQualityFilter:
 
         unchecked_nodes = nodes[max_check:]
 
-        logger.info(f'\n🛡️ 开始IP风险检测 ({provider}, Top {len(target_nodes)})...')
+        max_workers = max(1, int(self.ip_risk_config.get('max_workers', 8)))
+
+        default_interval = 1.5 if provider == 'ipapi' else 0.5
+
+        request_interval = max(0.0, float(self.ip_risk_config.get('request_interval', default_interval)))
+
+        timeout = float(self.ip_risk_config.get('timeout', 5))
+
+        logger.info(f'\n🛡️ 开始IP风险检测 ({provider}, Top {len(target_nodes)}, 并发={max_workers}, 间隔={request_interval}s)...')
+
+        self._run_async(self._check_ip_risk_async(target_nodes, provider, api_key, max_workers, request_interval, timeout))
+
+        # 区域限制检查 (纯本地计算，顺序执行)
 
         checked_nodes = []
 
-        for node in tqdm(target_nodes, desc='风险检测'):
+        region_config = getattr(self, 'region_config', {})
 
-            try:
+        for node in target_nodes:
 
-                # 获取IP
+            # ASN/ORG/ISP 命中黑名单，直接丢弃
 
-                host = node['host']
+            if node.get('blocked_by_asn'):
 
-                ip = None
+                continue
 
-                # 如果是域名，解析为IP
+            if region_config.get('enabled') and node.get('country'):
 
-                if not re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', host):
+                country = node['country']
 
-                    try:
+                allowed = region_config.get('allowed_countries', [])
 
-                        ip = socket.gethostbyname(host)
+                blocked = region_config.get('blocked_countries', [])
 
-                    except:
+                policy = region_config.get('policy', 'filter')
 
-                        pass
+                is_allowed = True
 
-                else:
+                # 如果有白名单，必须在白名单内
 
-                    ip = host
+                if allowed and country not in allowed:
 
-                if ip:
+                    is_allowed = False
 
-                    # 1. AbuseIPDB 模式
+                # 如果有黑名单，不能在黑名单内
 
-                    if provider == 'abuseipdb':
+                elif blocked and country in blocked:
 
-                        self._check_abuseipdb(node, ip, api_key)
+                    is_allowed = False
 
-                    # 2. IP-API 免Key模式
+                if not is_allowed:
 
-                    elif provider == 'ipapi':
+                    if policy == 'filter':
 
-                        self._check_ipapi(node, ip)
+                        logger.info(f"   - ❌ 地区不符 ({country}): {node['host']}")
 
-                # ASN/ORG/ISP 过滤（仅 ipapi）
+                        continue
 
-                if node.get('blocked_by_asn'):
+                    node['score'] -= 50 # 扣大分
 
-                    time.sleep(1.5 if provider == 'ipapi' else 0.5)
+                    logger.info(f"   - ⚠️ 地区不符 ({country}): 扣50分")
 
-                    continue
-
-                # 3. 区域限制检查
-
-                region_config = getattr(self, 'region_config', {})
-
-                if region_config.get('enabled') and node.get('country'):
-
-                    country = node['country']
-
-                    allowed = region_config.get('allowed_countries', [])
-
-                    blocked = region_config.get('blocked_countries', [])
-
-                    policy = region_config.get('policy', 'filter')
-
-                    is_allowed = True
-
-                    # 如果有白名单，必须在白名单内
-
-                    if allowed and country not in allowed:
-
-                        is_allowed = False
-
-                    # 如果有黑名单，不能在黑名单内
-
-                    elif blocked and country in blocked:
-
-                        is_allowed = False
-
-                    if not is_allowed:
-
-                        if policy == 'filter':
-
-                            logger.info(f"   - ❌ 地区不符 ({country}): {node['host']}")
-
-                            # 跳过添加，直接进入下一个循环
-
-                            # 避免触发速率限制
-
-                            time.sleep(1.5 if provider == 'ipapi' else 0.5)
-
-                            continue 
-
-                        else:
-
-                            node['score'] -= 50 # 扣大分
-
-                            logger.info(f"   - ⚠️ 地区不符 ({country}): 扣50分")
-
-                checked_nodes.append(node)
-
-                # 避免触发速率限制
-
-                time.sleep(1.5 if provider == 'ipapi' else 0.5) # IP-API 限制45次/分
-
-            except Exception as e:
-
-                logger.debug(f"Risk check failed: {e}")
-
-                checked_nodes.append(node)
+            checked_nodes.append(node)
 
         # 重新排序
 
@@ -2518,45 +2510,199 @@ class NodeQualityFilter:
 
         return all_nodes
 
-    def _check_abuseipdb(self, node, ip, api_key):
 
-        """AbuseIPDB 检测逻辑"""
+
+    async def _check_ip_risk_async(self, nodes, provider, api_key, max_workers, request_interval, timeout):
+
+        """并发检测节点IP，结果直接写回 node"""
+
+        if not nodes:
+
+            return
+
+        sem = asyncio.Semaphore(max_workers)
+
+        pacer = _RatePacer(request_interval)
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+
+            tasks = [
+
+                self._check_one_node(client, node, provider, api_key, sem, pacer)
+
+                for node in nodes
+
+            ]
+
+            test_bar = tqdm(total=len(tasks), desc='风险检测')
+
+            for coro in asyncio.as_completed(tasks):
+
+                try:
+
+                    await coro
+
+                except Exception as e:
+
+                    logger.debug(f'IP风险检测失败: {e}')
+
+                test_bar.update(1)
+
+            test_bar.close()
+
+
+
+    async def _check_one_node(self, client, node, provider, api_key, sem, pacer):
+
+        """单个节点: 解析域名 -> 查询归属 -> 打分"""
+
+        host = node.get('host')
+
+        if not host:
+
+            return
+
+        await pacer.wait()
+
+        async with sem:
+
+            ip = await self._async_resolve_ip(host)
+
+            if not ip:
+
+                return
+
+            if provider == 'abuseipdb':
+
+                data = await self._fetch_abuseipdb(client, ip, api_key)
+
+                if data:
+
+                    self._apply_abuseipdb(node, data)
+
+            else:
+
+                data = await self._fetch_ipapi(client, ip)
+
+                if data:
+
+                    self._apply_ipapi(node, ip, data)
+
+
+
+    async def _async_resolve_ip(self, host):
+
+        """域名解析为IPv4，失败返回 None"""
+
+        if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', host):
+
+            return host
 
         try:
 
-            headers = {'Key': api_key, 'Accept': 'application/json'}
+            return await asyncio.get_running_loop().run_in_executor(None, socket.gethostbyname, host)
 
-            params = {'ipAddress': ip, 'maxAgeInDays': 90}
+        except Exception:
 
-            response = requests.get('https://api.abuseipdb.com/api/v2/check', headers=headers, params=params, timeout=5)
+            return None
 
-            if response.status_code == 200:
 
-                data = response.json()['data']
 
-                score = data['abuseConfidenceScore']
+    async def _fetch_abuseipdb(self, client, ip, api_key):
 
-                node['risk_score'] = score
+        """请求 AbuseIPDB，失败返回 None"""
 
-                node['country'] = data.get('countryCode', 'Unknown')
+        headers = {'Key': api_key, 'Accept': 'application/json'}
 
-                # 区域检查
+        params = {'ipAddress': ip, 'maxAgeInDays': 90}
 
-                if not self.check_region_restriction(node):
+        try:
 
-                    node['final_score'] -= 20
+            response = await client.get('https://api.abuseipdb.com/api/v2/check', headers=headers, params=params)
 
-                max_risk = self.ip_risk_config.get('max_risk_score', 50)
+            if response.status_code != 200:
 
-                if score == 0: node['final_score'] += 3
+                return None
 
-                elif score < 20: node['final_score'] += 1
+            return response.json().get('data')
 
-                elif score > max_risk: node['final_score'] -= 10
+        except Exception:
 
-        except:
+            return None
 
-            pass
+
+
+    async def _fetch_ipapi(self, client, ip):
+
+        """请求 ip-api.com，失败返回 None"""
+
+        # 请求字段: status, message, countryCode, country, isp, org, as, mobile, proxy, hosting
+
+        url = f'http://ip-api.com/json/{ip}?fields=status,message,countryCode,country,isp,org,as,mobile,proxy,hosting'
+
+        try:
+
+            response = await client.get(url)
+
+            if response.status_code == 429:
+
+                logger.warning('⚠️ ip-api 触发限流(429)，请调大 ip_risk_check.request_interval')
+
+                return None
+
+            if response.status_code != 200:
+
+                return None
+
+            data = response.json()
+
+            if data.get('status') == 'fail':
+
+                return None
+
+            return data
+
+        except Exception:
+
+            return None
+
+
+
+    def _apply_abuseipdb(self, node, data):
+
+        """AbuseIPDB 结果打分"""
+
+        if 'abuseConfidenceScore' not in data:
+
+            return
+
+        score = data['abuseConfidenceScore']
+
+        node['risk_score'] = score
+
+        node['country'] = data.get('countryCode', 'Unknown')
+
+        # 区域检查
+
+        if not self.check_region_restriction(node):
+
+            node['final_score'] -= 20
+
+        max_risk = self.ip_risk_config.get('max_risk_score', 50)
+
+        if score == 0:
+
+            node['final_score'] += 3
+
+        elif score < 20:
+
+            node['final_score'] += 1
+
+        elif score > max_risk:
+
+            node['final_score'] -= 10
+
+
 
     def check_region_restriction(self, node):
 
@@ -2590,7 +2736,7 @@ class NodeQualityFilter:
 
         # 这里默认保留 HK，因为很多机场的 HK 节点有解锁
 
-        # blocked_for_ai = ['HK', 'MO'] 
+        # blocked_for_ai = ['HK', 'MO']
 
         # if country in blocked_for_ai:
 
@@ -2598,11 +2744,13 @@ class NodeQualityFilter:
 
         return True
 
-    def _check_ipapi(self, node, ip):
+
+
+    def _apply_ipapi(self, node, ip, data):
 
         """
 
-        使用 ip-api.com 检测 (免Key)
+        使用 ip-api.com 检测结果打分 (免Key)
 
         检测项目: Hosting(机房), Proxy(代理), Mobile(移动)
 
@@ -2610,129 +2758,110 @@ class NodeQualityFilter:
 
         """
 
-        try:
+        # 获取详细信息
 
-            # 请求字段: status, message, countryCode, country, isp, org, as, mobile, proxy, hosting
+        country = data.get('countryCode', 'UNK')
 
-            url = f'http://ip-api.com/json/{ip}?fields=status,message,countryCode,country,isp,org,as,mobile,proxy,hosting'
+        isp = data.get('isp', 'Unknown')
 
-            response = requests.get(url, timeout=5)
+        org = data.get('org', 'Unknown')
 
-            if response.status_code == 200:
+        as_text = data.get('as', '')
 
-                data = response.json()
+        is_mobile = data.get('mobile', False)
 
-                if data.get('status') == 'fail':
+        is_proxy = data.get('proxy', False)
 
-                    return
+        is_hosting = data.get('hosting', False)
 
-                # 获取详细信息
+        node['country'] = country
 
-                country = data.get('countryCode', 'UNK')
+        node['isp'] = isp
 
-                isp = data.get('isp', 'Unknown')
+        node['org'] = org
 
-                org = data.get('org', 'Unknown')
+        node['as'] = as_text
 
-                as_text = data.get('as', '')
+        # 风险判断逻辑 - 评分模式
 
-                is_mobile = data.get('mobile', False)
+        behavior = self.ip_risk_config.get('ipapi_behavior', {})
 
-                is_proxy = data.get('proxy', False)
+        exclude_hosting = behavior.get('exclude_hosting', True)
 
-                is_hosting = data.get('hosting', False)
+        exclude_proxy = behavior.get('exclude_proxy', False)
 
-                node['country'] = country
+        exclude_mobile = behavior.get('exclude_mobile', False)
 
-                node['isp'] = isp
+        # 计算风险评分
 
-                node['org'] = org
+        risk_score = 0
 
-                node['as'] = as_text
+        risk_factors = []
 
-                # 风险判断逻辑 - 评分模式
+        if is_hosting and exclude_hosting:
 
-                behavior = self.ip_risk_config.get('ipapi_behavior', {})
+            risk_factors.append('Hosting')
 
-                exclude_hosting = behavior.get('exclude_hosting', True)
+            risk_score = 50  # 机房IP风险值50
 
-                exclude_proxy = behavior.get('exclude_proxy', False)
+            node['final_score'] -= 5  # 降5分，而不是归零
 
-                exclude_mobile = behavior.get('exclude_mobile', False)
+        if is_proxy and exclude_proxy:
 
-                # 计算风险评分
+            risk_factors.append('Proxy')
 
-                risk_score = 0
+            risk_score = max(risk_score, 60)  # 代理IP风险值60
 
-                risk_factors = []
+            node['final_score'] -= 3
 
-                if is_hosting and exclude_hosting:
+        if is_mobile and exclude_mobile:
 
-                    risk_factors.append('Hosting')
+            risk_factors.append('Mobile')
 
-                    risk_score = 50  # 机房IP风险值50
+            risk_score = max(risk_score, 30)
 
-                    node['final_score'] -= 5  # 降5分，而不是归零
+            node['final_score'] -= 2
 
-                if is_proxy and exclude_proxy:
+        if risk_factors:
 
-                    risk_factors.append('Proxy')
+            node['risk_score'] = risk_score
 
-                    risk_score = max(risk_score, 60)  # 代理IP风险值60
+            logger.info(f"   - ⚠️ 风险IP ({', '.join(risk_factors)}): {ip} ({isp}) | 风险值={risk_score} 降分")
 
-                    node['final_score'] -= 3
+        else:
 
-                if is_mobile and exclude_mobile:
+            # 纯净家庭宽带IP - 最佳质量
 
-                    risk_factors.append('Mobile')
+            node['risk_score'] = 0
 
-                    risk_score = max(risk_score, 30)
+            node['final_score'] += 10
 
-                    node['final_score'] -= 2
+            logger.info(f"   - ✅ 纯净IP: {ip} ({country} - {isp}) | 风险值=0 加分")
 
-                if risk_factors:
+        # ASN/ORG/ISP 黑名单（ipapi）
 
-                    node['risk_score'] = risk_score
+        block_asn, penalty_asn, flags_asn = self._apply_asn_filter(node, data)
 
-                    logger.info(f"   - ⚠️ 风险IP ({', '.join(risk_factors)}): {ip} ({isp}) | 风险值={risk_score} 降分")
+        if flags_asn:
 
-                else:
+            node['asn_flags'] = flags_asn
 
-                    # 纯净家庭宽带IP - 最佳质量
+        if block_asn:
 
-                    node['risk_score'] = 0
+            node['blocked_by_asn'] = True
 
-                    node['final_score'] += 10
+            self.asn_filter_blocked += 1
 
-                    logger.info(f"   - ✅ 纯净IP: {ip} ({country} - {isp}) | 风险值=0 加分")
+            logger.info(f"   - ❌ ASN/ORG/ISP 命中黑名单: {ip} ({as_text or isp})")
 
-                # ASN/ORG/ISP 黑名单（ipapi）
+        elif penalty_asn > 0:
 
-                block_asn, penalty_asn, flags_asn = self._apply_asn_filter(node, data)
+            node['final_score'] -= penalty_asn
 
-                if flags_asn:
+            node['asn_penalty'] = penalty_asn
 
-                    node['asn_flags'] = flags_asn
+            self.asn_filter_penalized += 1
 
-                if block_asn:
-
-                    node['blocked_by_asn'] = True
-
-                    self.asn_filter_blocked += 1
-
-                    logger.info(f"   - ❌ ASN/ORG/ISP 命中黑名单: {ip} ({as_text or isp})")
-
-                elif penalty_asn > 0:
-
-                    node['final_score'] -= penalty_asn
-
-                    node['asn_penalty'] = penalty_asn
-
-                    self.asn_filter_penalized += 1
-
-        except Exception as e:
-
-            logger.warning(f"IP-API 检测异常: {e}")
 
 def main():
 

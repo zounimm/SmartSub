@@ -349,6 +349,13 @@ ip_risk_check:
   provider: ipapi            # 提供商: ipapi (免Key) 或 abuseipdb (需Key，更精准)
   # check_top_nodes: 999999999      # 检测Top 300节点 (约需7分钟，平衡速度与覆盖率)  。不配置就不限制。
 
+  # 并发检测配置
+  max_workers: 8             # 并发数：同时进行检测的节点数量
+  request_interval: 1.4      # 两次请求之间的最小间隔(秒)，0 = 不限制
+                             # ip-api 免费版限制 45 次/分钟，1.4 秒约等于该上限
+                             # 使用付费 Key / 自建代理时可设为 0，获得最大速度
+  timeout: 5                 # 单次请求超时(秒)
+
   # ipapi 行为策略 - 决定如何判断IP纯净度
   # 🔄 新模式：评分模式（降分但不淘汰节点）
   ipapi_behavior:
