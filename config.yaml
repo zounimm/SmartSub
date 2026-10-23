@@ -335,7 +335,7 @@ risk_filter:
     - auth
   allow_sni_domains: []  # SNI 白名单域名
   allow_host_domains: [] # Host 白名单域名
-  allow_path_keywords: []# Path 白名单关键词
+  allow_path_keywords: [] # Path 白名单关键词
   block_on:
     sni_phishing: false
     host_phishing: false
