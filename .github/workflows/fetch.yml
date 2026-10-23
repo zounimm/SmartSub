@@ -5,7 +5,8 @@ on:
   workflow_dispatch:
 
   schedule:
-    - cron: '0 20 * * *' # 北京时间凌晨4点 (UTC 20:00)
+    - cron: '0 */4 * * *' 
+    # - cron: '0 20 * * *' # 北京时间凌晨4点 (UTC 20:00)
   # watch:
   #   types: started
   # - cron: '0 3,12 * * *'
