@@ -5,12 +5,13 @@ on:
   workflow_dispatch:
 
   schedule:
+    # 每4小时跑一次
     - cron: '0 */4 * * *' 
-    # - cron: '0 20 * * *' # 北京时间凌晨4点 (UTC 20:00)
+      # - cron: '0 20 * * *' # 北京时间凌晨4点 (UTC 20:00)
   # watch:
   #   types: started
   # - cron: '0 3,12 * * *'
-  # -'0 */1 * * *'
+  # -'0 */1 * * *
 
 # 赋予 GITHUB_TOKEN 写权限
 permissions:
