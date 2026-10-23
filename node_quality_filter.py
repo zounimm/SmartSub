@@ -1931,7 +1931,7 @@ class NodeQualityFilter:
 
             logger.info(f'   -> 本批次新增可用: {len(batch_results)} 个')
 
-            if total_tested >= 20000:
+            if total_tested >= sys.maxsize:
 
                  logger.warning('⚠️ 达到最大测试上限 (20000)，强制停止。')
 
