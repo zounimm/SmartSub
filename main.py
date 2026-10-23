@@ -583,7 +583,7 @@ class SubscriptionCollector:
         # 严格过滤无效节点 (必须包含 :// 且长度 > 15)
         all_nodes = {node for node in all_nodes if '://' in node and len(node) > 15}
         # 限制文件大小
-        nodes_limit = 10000
+        nodes_limit = float('inf')
         if len(all_nodes) > nodes_limit:
             logger.info(f'节点总数 ({len(all_nodes)}) 超过限制 ({nodes_limit})，执行随机采样清理...')
             # 随机保留指定数量，防止文件过大
