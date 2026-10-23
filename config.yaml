@@ -347,7 +347,7 @@ risk_filter:
 ip_risk_check:
   enabled: true              # 开启高质量IP检测
   provider: ipapi            # 提供商: ipapi (免Key) 或 abuseipdb (需Key，更精准)
-  check_top_nodes: 300       # 检测Top 300节点 (约需7分钟，平衡速度与覆盖率)
+  check_top_nodes: 999999999      # 检测Top 300节点 (约需7分钟，平衡速度与覆盖率)
 
   # ipapi 行为策略 - 决定如何判断IP纯净度
   # 🔄 新模式：评分模式（降分但不淘汰节点）
