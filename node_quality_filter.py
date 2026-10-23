@@ -18,6 +18,7 @@
 5. 节点去重
 
 """
+import sys
 
 import os
 
@@ -299,7 +300,7 @@ class NodeQualityFilter:
 
                 self.ip_risk_config.setdefault('enabled', False)
 
-                self.ip_risk_config.setdefault('check_top_nodes', 50)
+                self.ip_risk_config.setdefault('check_top_nodes', sys.maxsize)
 
                 self.ip_risk_config.setdefault('max_risk_score', 50)
 
@@ -2377,7 +2378,7 @@ class NodeQualityFilter:
 
         provider = self.ip_risk_config.get('provider', 'abuseipdb')
 
-        max_check = self.ip_risk_config.get('check_top_nodes', 50)
+        max_check = self.ip_risk_config.get('check_top_nodes', sys.maxsize)
 
         # AbuseIPDB 检查
 
