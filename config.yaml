@@ -185,6 +185,28 @@ subscribe:
   - https://raw.githubusercontent.com/mfuu/v2ray/master/clash.yaml
   - https://raw.githubusercontent.com/anaer/Sub/main/clash.yaml
   - https://raw.githubusercontent.com/SnapdragonLee/SystemProxy/master/dist/clash_config.yaml
+  # 自己添加的其他订阅源：https://github.com/HelenTim/subs-check/blob/master/config/config.yaml
+   - https://raw.githubusercontent.com/firefoxmmx2/v2rayshare_subcription/main/subscription/clash_sub.yaml
+  - https://raw.githubusercontent.com/Q3dlaXpoaQ/V2rayN_Clash_Node_Getter/refs/heads/main/APIs/sc0.yaml
+  - https://raw.githubusercontent.com/mahdibland/SSAggregator/master/sub/sub_merge_yaml.yml
+  - https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.yml
+  - https://raw.githubusercontent.com/zhangkaiitugithub/passcro/main/speednodes.yaml
+  - https://raw.githubusercontent.com/aiboboxx/v2rayfree/refs/heads/main/README.md
+  - https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/snippets/nodes.meta.yml
+  - https://raw.githubusercontent.com/Ruk1ng001/freeSub/main/clash.yaml
+  - https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/all_configs.txt
+  - https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash
+  - https://raw.githubusercontent.com/go4sharing/sub/main/sub.yaml
+  - https://raw.githubusercontent.com/actionsfz/v2ray/refs/heads/master/all.yaml
+  - https://raw.githubusercontent.com/Pawdroid/Free-servers/refs/heads/main/sub
+  - https://raw.githubusercontent.com/acymz/AutoVPN/main/data/V2.txt
+  - https://raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/wenode.txt
+  - https://raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/v2rayshare.txt
+  - https://raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/nodefree.txt
+  - https://raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/ndnode.txt
+  - https://raw.githubusercontent.com/Barabama/FreeNodes/main/nodes/clashmeta.txt
+  - https://raw.githubusercontent.com/xiaoji235/airport-free/main/v2ray.txt
+  - https://raw.githubusercontent.com/beck-8/sub-urls/refs/heads/main/%E5%B0%8F%E8%80%8C%E7%BE%8E.txt
 
 subconverter_backends:
   - api.dler.io
@@ -204,6 +226,8 @@ web_pages:
   # 2025-01-30 新增
   - https://deepwiki.com/free18/v2ray/4.2-free-subscription-options
   - https://github.com/mermeroo/V2RAY-and-CLASH-Subscription-Links/blob/main/SUB%20LINKS
+  # 2026-10-23自己添加的收集github项目的订阅源，这个是活的
+  - https://proxynodehub-latest.onrender.com/subscriptions.txt
 
 sub_convert_apis:
   - api.dler.io
@@ -220,9 +244,9 @@ quality_filter:
 
   # 大规模节点处理配置 - 精选高质量方案
   max_test_nodes: 5000         # 最多测试节点数
-  max_output_nodes: 150        # 输出150个精选节点
-  min_guarantee: 150           # 保底150个节点
-  preferred_protocols_only: false  # 测试所有协议
+  max_output_nodes: 300        # 输出150个精选节点
+  min_guarantee: 50           # 保底150个节点
+  preferred_protocols_only: true  # 测试所有协议
   smart_sampling: true         # 智能采样
 
   # 区域限制 (Region Limit) - 改为降分模式，不直接丢弃
