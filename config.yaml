@@ -205,6 +205,8 @@ tgchannel:
 # 直连订阅源 (Direct Subscription URLs) - GitHub/Websites
 subscribe:
   # 自己加的
+  - https://sub.danhu.dpdns.org/paste/26HappyMAF-TG@FProxies/clash
+  - https://sub.danhu.dpdns.org/paste/TG@FProxies260822Y4qC45A/clash
   - https://www.gitlabip.xyz/Alvin9999/PAC/refs/heads/master/backup/img/1/2/ipp/quick/1/config.yaml
   - https://openproxylist.com/v2ray/rawlist/text
   - https://openproxylist.com/v2ray/rawlist/subscribe
