@@ -243,6 +243,15 @@ class SubscriptionCollector:
     def get_random_ua(self):
         """随机获取 User-Agent"""
         return random.choice(self.user_agents)
+    def browser_headers(self):
+        """模拟浏览器的完整请求头，降低被 WAF 拦截的概率"""
+        return {
+            'User-Agent': self.get_random_ua(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
     def check_ssrf(self, url):
         """简单的 SSRF 防御检测"""
         if not url: return False
@@ -279,9 +288,7 @@ class SubscriptionCollector:
         node_list = []
         data = None
         try:
-            headers = {
-                'User-Agent': self.get_random_ua()
-            }
+            headers = self.browser_headers()
             # 发起请求 (启用 stream 模式防止内存溢出)
             resp = requests.get(url, headers=headers, timeout=self.request_timeout, proxies=self.proxies, stream=True)
             # 严格过滤：检测 400 以上的页面直接跳过 (用户指令)
@@ -435,7 +442,7 @@ class SubscriptionCollector:
             return
         # 单次请求，不重试
         try:
-            headers = {'User-Agent': self.get_random_ua()}
+            headers = self.browser_headers()
             res = requests.get(url, headers=headers, timeout=self.request_timeout, stream=True, proxies=self.proxies)
             # 严格过滤：检测 400 以上的页面直接跳过 (用户指令)
             if res.status_code >= 400:
