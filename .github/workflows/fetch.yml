@@ -86,7 +86,7 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add ./sub/all_nodes.txt || true
+        git add ./sub/all_nodes.txt ./sub/dynamic_url.txt || true
         # 旧文件名已被 sub/all_nodes.txt 取代
         if [ -f "sub/all_nodes.txt" ]; then
           git rm -q --ignore-unmatch sub/sub_all_url_check.txt || true
