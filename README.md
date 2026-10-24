@@ -18,6 +18,7 @@ SmartSub 旨在为您提供最纯净、稳定的代理体验。它能自动遍�
 - ✅ **去重机制**：基于 MD5 和节点参数的智能去重，消除重复订阅
 - ✅ **GitHub 用户去重**：同一 GitHub 用户的多个订阅链接仅保留一个，减少噪音
 - ✅ **动态日期链接**：按日期模板生成订阅链接（`{YYYY}` `{YY}` `{MM}` `{M}` `{DD}` `{D}`），当天取不到就自动往前回退一天，支持配置多个模板
+- ✅ **智能拼装订阅链接**：按「基础域名 / 节点列表 / 可选格式」三段式说明自动拼出可用的 `.../base64` 订阅地址
 - ✅ **安全防护**：内置 SSRF 防护机制，防止恶意请求内网地址
 
 ### 🎯 深度质量控制 (NEW!)
@@ -161,6 +162,24 @@ dynamic_source:
 **有效性判定**：HTTP 200 且内容中能解析出节点（支持明文分享链接、Base64 订阅、Clash YAML，也能处理 gzip 压缩的响应）。
 
 > ⚠️ GitHub Actions runner 默认是 UTC 时区，建议把 `timezone` 设为 `Asia/Shanghai`，否则北京时间 0:00–8:00 运行时会取到前一天。
+
+**自动拼装订阅链接**：有些电报频道不直接给订阅地址，而是拆成三段：
+
+```
+基础域名(直接点击复制):
+https://sub.example.com/
+节点列表(直接点击复制)：
+paste/abcdef-TG@Channel/
+可选格式(根据代理软件选择一个对应的点击复制):
+clash
+base64
+quanx
+urls
+```
+
+程序会自动拼成 `https://sub.example.com/paste/abcdef-TG@Channel/base64`，加入抓取队列，并写进 `sub/dynamic_url.txt`。
+
+固定选 `base64`——最通用的订阅格式。`quanx` 是 Quantumult X 私有格式，不含分享链接，无法解析。
 
 ### 性能配置
 
@@ -330,7 +349,7 @@ subconverter_backends:
 | `sub_all_sub_store.txt` | Sub-Store 专用格式（区分机场与开心玩耍） |
 | `YYYY/MM/D-DD.yaml` | 按日期归档的每日抓取结果（只保留最近 N 个结果，由 `retention.keep_recent` 控制，默认 7 个） |
 | `sub/all_nodes.txt` | ⭐ **全量节点快照**（抓取完立即生成，未筛选，含项目未支持的协议，可自行下载测试） |
-| `sub/dynamic_url.txt` | 动态日期链接源命中的链接（每行一个） |
+| `sub/dynamic_url.txt` | 动态日期链接源命中的链接 + 自动拼装的订阅链接（每行一个） |
 | `sub/high_quality_nodes.txt` | ⭐ **高质量筛选节点**（经过连通性、延迟、IP风险检测） |
 | `runtime/quality_report.json` | 节点质量分析报告（包含统计数据） |
 

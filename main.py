@@ -17,7 +17,7 @@ from pre_check import pre_check, get_sub_all
 from utils import is_safe_url, mask_sensitive_data
 from verify_subscription import verify_subscription_file
 from clash_parser import clash_yaml_to_links
-from dynamic_source import resolve_many as resolve_dynamic_sources, today_in
+from dynamic_source import resolve_many as resolve_dynamic_sources, today_in, assemble_subscription_urls
 
 class SubscriptionCollector:
     def __init__(self):
@@ -92,6 +92,8 @@ class SubscriptionCollector:
         self.list_web_fuzz = []
         # 动态日期链接源 (由 config.yaml 的 dynamic_source 覆盖)
         self.dynamic_source_config = {}
+        # 从电报/网页说明里拼装出的订阅链接
+        self.assembled_sub_urls = set()
         # 加载配置
         self.load_config()
     def _extract_github_user(self, url):
@@ -321,6 +323,12 @@ class SubscriptionCollector:
             url_list = list(set(url_list))
             # 过滤敏感链接
             url_list = [u for u in url_list if is_safe_url(u)]
+            # 拼装「基础域名 + 相对路径 + 格式」形式的订阅链接
+            assembled = [u for u in assemble_subscription_urls(data) if is_safe_url(u)]
+            if assembled:
+                self.assembled_sub_urls.update(assembled)
+                url_list = list(dict.fromkeys(url_list + assembled))
+                logger.info(f'{mask_sensitive_data(url)}\t拼装出 {len(assembled)} 个订阅链接')
             # 2. 提取直接节点
             direct_nodes = re.findall(self.node_str, data)
             # Clash / Mihomo YAML 内容转成分享链接
@@ -885,40 +893,49 @@ class SubscriptionCollector:
         self.save_collected_nodes()
         return url_list
     def fetch_dynamic_source(self):
-        """按 dynamic_source.templates 取数，每个模板独立逐日向前回退直到命中。"""
+        """解析动态日期链接，并把拼装出的订阅链接一起写入 sub/dynamic_url.txt。"""
         cfg = self.dynamic_source_config
-        if not cfg.get('enabled'):
-            return
-        templates = cfg.get('templates')
-        if isinstance(templates, str):
-            templates = [templates]
-        if not isinstance(templates, list) or not templates:
-            # 兼容旧的单个 template 字段
-            templates = [cfg['template']] if cfg.get('template') else []
-        templates = list(dict.fromkeys(str(t).strip() for t in templates if str(t).strip()))
-        if not templates:
-            return
+        urls = []
+        nodes = set()
 
-        max_days_back = int(cfg.get('max_days_back', 30))
-        timeout = int(cfg.get('timeout', 10))
-        output_path = self.get_abs_path(cfg.get('output_file', 'sub/dynamic_url.txt'))
+        if cfg.get('enabled'):
+            templates = cfg.get('templates')
+            if isinstance(templates, str):
+                templates = [templates]
+            if not isinstance(templates, list) or not templates:
+                # 兼容旧的单个 template 字段
+                templates = [cfg['template']] if cfg.get('template') else []
+            templates = list(dict.fromkeys(str(t).strip() for t in templates if str(t).strip()))
+            if templates:
+                max_days_back = int(cfg.get('max_days_back', 30))
+                timeout = int(cfg.get('timeout', 10))
+                logger.info(f'🔎 解析动态日期链接: {len(templates)} 个模板')
+                urls, nodes = resolve_dynamic_sources(
+                    templates, self.node_str, max_days_back, timeout, today_in(cfg.get('timezone'))
+                )
+                if urls:
+                    logger.info(f'✅ 动态链接命中 {len(urls)}/{len(templates)} 个 (节点 {len(nodes)} 个)')
+                else:
+                    logger.warning(f'⚠️ 动态链接连续回退 {max_days_back} 天均无有效节点')
 
-        logger.info(f'🔎 解析动态日期链接: {len(templates)} 个模板')
-        urls, nodes = resolve_dynamic_sources(
-            templates, self.node_str, max_days_back, timeout, today_in(cfg.get('timezone'))
-        )
+        assembled = sorted(self.assembled_sub_urls)
+        if assembled:
+            logger.info(f'🔗 拼装出 {len(assembled)} 个订阅链接')
+        urls = list(dict.fromkeys(urls + assembled))
         if not urls:
-            logger.warning(f'⚠️ 动态链接连续回退 {max_days_back} 天均无有效节点，跳过')
             return
-        logger.info(f'✅ 动态链接命中 {len(urls)}/{len(templates)} 个 (节点 {len(nodes)} 个)')
+
+        output_path = self.get_abs_path(cfg.get('output_file', 'sub/dynamic_url.txt'))
         try:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(urls))
         except Exception as e:
             logger.warning(f'写入动态链接文件失败: {e}')
-        with self.lock:
-            self.unique_nodes.update(nodes)
+
+        if nodes:
+            with self.lock:
+                self.unique_nodes.update(nodes)
     def run(self):
         start_time = time.time()
         try:

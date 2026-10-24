@@ -4,6 +4,7 @@
 import base64
 import datetime
 import gzip
+import html
 import re
 
 import requests
@@ -16,6 +17,93 @@ _HEADERS = {
                   '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Accept': '*/*',
 }
+
+_LABEL_BASE = '基础域名'
+_LABEL_NODES = '节点列表'
+_LABEL_FORMATS = '可选格式'
+_LABELS = (_LABEL_BASE, _LABEL_NODES, _LABEL_FORMATS)
+
+_FORMAT_TOKENS = {'base64', 'clash', 'quanx', 'urls', 'v2ray', 'sip002'}
+
+_HTTP_URL_RE = re.compile(r'^https?://\S+$')
+_REL_PATH_RE = re.compile(r'^[A-Za-z0-9._~@%+\-]+(?:/[A-Za-z0-9._~@%+\-]+)*/?$')
+
+
+def _plain_lines(text):
+    """把 HTML 粗略转成按行文本。"""
+    cleaned = re.sub(r'<(script|style)[^>]*>.*?</\1>', ' ', text, flags=re.S | re.I)
+    cleaned = re.sub(r'<br\s*/?>', '\n', cleaned, flags=re.I)
+    cleaned = re.sub(r'<[^>]+>', '\n', cleaned)
+    cleaned = html.unescape(cleaned)
+    return [line.strip() for line in cleaned.splitlines() if line.strip()]
+
+
+def _value_after(lines, start, predicate, limit=8):
+    """取标签行之后第一个满足条件的值；标签同一行冒号后的内容优先。"""
+    head = lines[start]
+    for sep in ('：', ':'):
+        if sep in head:
+            tail = head.split(sep, 1)[1].strip()
+            if predicate(tail):
+                return tail
+            break
+    for candidate in lines[start + 1:start + 1 + limit]:
+        if predicate(candidate):
+            return candidate
+        if any(label in candidate for label in _LABELS):
+            break
+    return None
+
+
+def _is_relative_path(value):
+    return '://' not in value and '/' in value and bool(_REL_PATH_RE.match(value))
+
+
+def assemble_subscription_urls(text, preferred_format='base64'):
+    """按「基础域名 / 节点列表 / 可选格式」三段式说明拼出订阅链接。
+
+    典型电报消息：
+        基础域名(直接点击复制):
+        https://sub.example.com/
+        节点列表(直接点击复制)：
+        paste/abcdef-TG@Channel/
+        可选格式(根据代理软件选择一个对应的点击复制):
+        clash / base64 / quanx / urls
+    """
+    if not text:
+        return []
+    lines = _plain_lines(text)
+    urls = []
+    seen = set()
+
+    for index, line in enumerate(lines):
+        if _LABEL_BASE not in line:
+            continue
+        base = _value_after(lines, index, lambda value: bool(_HTTP_URL_RE.match(value)))
+        if not base:
+            continue
+
+        path = None
+        formats_at = None
+        for cursor in range(index + 1, min(index + 12, len(lines))):
+            if path is None and _LABEL_NODES in lines[cursor]:
+                path = _value_after(lines, cursor, _is_relative_path)
+            elif _LABEL_FORMATS in lines[cursor]:
+                formats_at = cursor
+                break
+        if not path or formats_at is None:
+            continue
+
+        offered = {item.lower() for item in lines[formats_at + 1:formats_at + 11]} & _FORMAT_TOKENS
+        if not offered:
+            continue
+
+        url = f"{base.rstrip('/')}/{path.strip('/')}/{preferred_format}"
+        if url not in seen:
+            seen.add(url)
+            urls.append(url)
+
+    return urls
 
 
 def format_template(template, day):
