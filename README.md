@@ -328,7 +328,7 @@ subconverter_backends:
 | `sub_all_clash.txt` | **Clash订阅文件（Base64编码，可直接导入）** ✅ |
 | `sub_all_loon.txt` | **Loon订阅文件（Base64编码，可直接导入）** ✅ |
 | `sub_all_sub_store.txt` | Sub-Store 专用格式（区分机场与开心玩耍） |
-| `YYYY/MM/D-DD.yaml` | 按日期归档的每日抓取结果 |
+| `YYYY/MM/D-DD.yaml` | 按日期归档的每日抓取结果（只保留最近 N 个结果，由 `retention.keep_recent` 控制，默认 7 个） |
 | `sub/all_nodes.txt` | ⭐ **全量节点快照**（抓取完立即生成，未筛选，含项目未支持的协议，可自行下载测试） |
 | `sub/dynamic_url.txt` | 动态日期链接源命中的链接（每行一个） |
 | `sub/high_quality_nodes.txt` | ⭐ **高质量筛选节点**（经过连通性、延迟、IP风险检测） |

@@ -22,6 +22,10 @@ nodes:
     - tuic
     - anytls
 
+# 归档保留策略
+retention:
+  keep_recent: 7 # 只保留最近 N 个按日期归档的结果，其余删除（0=不清理）
+
 # 动态日期链接源 (Dynamic dated source)
 # 模板里的占位符会按当天日期替换：
 #   {YYYY}=2026  {YY}=26  {MM}=10  {M}=10  {DD}=24  {D}=24
@@ -49,6 +53,7 @@ dynamic_source:
 tgchannel:
   # 自己新加
   - https://:t.me/clashv8
+  - https://:t.me/wzmfjd
   # 其他人的
   - https://t.me/WFVPN
   - https://t.me/ripaojiedian
