@@ -1708,7 +1708,7 @@ class NodeQualityFilter:
 
             if proxy_url:
 
-                async with httpx.AsyncClient(timeout=timeout, proxies=proxy_url) as proxy_client:
+                async with httpx.AsyncClient(timeout=timeout, proxy=proxy_url) as proxy_client:
 
                     results = await self._gather_connectivity(nodes, api_client, proxy_client, sem, batch_idx, skip_cn)
 
