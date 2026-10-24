@@ -31,6 +31,11 @@ dynamic_source:
   templates:                   # 可配置多个模板，各自独立按日期回溯
     - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
     - "https://free.datiya.com/uploads/{YYYY}{MM}{DD}-clash.yaml"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/1-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/2-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/3-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/4-{YYYY}{MM}{DD}.txt"
     # - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
   max_days_back: 30            # 最多向前回退多少天
   timeout: 30                  # 单次请求超时(秒)
