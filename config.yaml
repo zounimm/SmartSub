@@ -29,7 +29,7 @@ nodes:
 dynamic_source:
   enabled: true
   templates:                   # 可配置多个模板，各自独立按日期回溯
-    - "https://aa.mibei77.com/{YYYY}{MM}/{MM}{DD}Clashila.yaml"
+    - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
     # - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
   max_days_back: 30            # 最多向前回退多少天
   timeout: 10                  # 单次请求超时(秒)
