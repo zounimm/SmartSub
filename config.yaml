@@ -22,6 +22,20 @@ nodes:
     - tuic
     - anytls
 
+# 动态日期链接源 (Dynamic dated source)
+# 模板里的占位符会按当天日期替换：
+#   {YYYY}=2026  {MM}=10  {M}=10  {DD}=24  {D}=24
+# 当天链接取不到有效节点时，日期自动往前退一天重试，直到命中或达到 max_days_back
+dynamic_source:
+  enabled: true
+  templates:                   # 可配置多个模板，各自独立按日期回溯
+    - "https://aa.mibei77.com/{YYYY}{MM}/{MM}{DD}Clashila.yaml"
+    # - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
+  max_days_back: 30            # 最多向前回退多少天
+  timeout: 10                  # 单次请求超时(秒)
+  output_file: sub/dynamic_url.txt   # 命中的链接写入此文件(每行一个)
+  timezone: ""                 # 留空=运行环境本地时间；可填 Asia/Shanghai
+
 # Telegram 频道配置
 tgchannel:
   - https://t.me/WFVPN

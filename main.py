@@ -17,6 +17,7 @@ from pre_check import pre_check, get_sub_all
 from utils import is_safe_url, mask_sensitive_data
 from verify_subscription import verify_subscription_file
 from clash_parser import clash_yaml_to_links
+from dynamic_source import resolve_many as resolve_dynamic_sources, today_in
 
 class SubscriptionCollector:
     def __init__(self):
@@ -89,6 +90,8 @@ class SubscriptionCollector:
         self.list_tg = []
         self.list_subscribe = []
         self.list_web_fuzz = []
+        # 动态日期链接源 (由 config.yaml 的 dynamic_source 覆盖)
+        self.dynamic_source_config = {}
         # 加载配置
         self.load_config()
     def _extract_github_user(self, url):
@@ -203,6 +206,13 @@ class SubscriptionCollector:
                 logger.warning(f'忽略无法解析的 Telegram 链接: {url}')
         self.list_subscribe = data.get('subscribe', [])
         self.list_web_fuzz = data.get('web_pages', [])
+        # 动态日期链接源
+        self.dynamic_source_config = data.get('dynamic_source', {}) or {}
+        if self.dynamic_source_config.get('enabled'):
+            _templates = self.dynamic_source_config.get('templates') or self.dynamic_source_config.get('template') or []
+            if isinstance(_templates, str):
+                _templates = [_templates]
+            logger.info(f'✅ 动态日期链接源已启用: {len(_templates)} 个模板')
         # 获取订阅转换 API
         # 优先读取 subconverter_backends，兼容旧配置 sub_convert_apis
         config_apis = data.get('subconverter_backends') or data.get('sub_convert_apis', [])
@@ -874,11 +884,47 @@ class SubscriptionCollector:
             url_list.extend(self.list_subscribe)
         self.save_collected_nodes()
         return url_list
+    def fetch_dynamic_source(self):
+        """按 dynamic_source.templates 取数，每个模板独立逐日向前回退直到命中。"""
+        cfg = self.dynamic_source_config
+        if not cfg.get('enabled'):
+            return
+        templates = cfg.get('templates')
+        if isinstance(templates, str):
+            templates = [templates]
+        if not isinstance(templates, list) or not templates:
+            # 兼容旧的单个 template 字段
+            templates = [cfg['template']] if cfg.get('template') else []
+        templates = list(dict.fromkeys(str(t).strip() for t in templates if str(t).strip()))
+        if not templates:
+            return
+
+        max_days_back = int(cfg.get('max_days_back', 30))
+        timeout = int(cfg.get('timeout', 10))
+        output_path = self.get_abs_path(cfg.get('output_file', 'sub/dynamic_url.txt'))
+
+        logger.info(f'🔎 解析动态日期链接: {len(templates)} 个模板')
+        urls, nodes = resolve_dynamic_sources(
+            templates, self.node_str, max_days_back, timeout, today_in(cfg.get('timezone'))
+        )
+        if not urls:
+            logger.warning(f'⚠️ 动态链接连续回退 {max_days_back} 天均无有效节点，跳过')
+            return
+        logger.info(f'✅ 动态链接命中 {len(urls)}/{len(templates)} 个 (节点 {len(nodes)} 个)')
+        try:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(urls))
+        except Exception as e:
+            logger.warning(f'写入动态链接文件失败: {e}')
+        with self.lock:
+            self.unique_nodes.update(nodes)
     def run(self):
         start_time = time.time()
         try:
             # 1. Update Today's Sub
             url_list = self.get_url_form_channel()
+            self.fetch_dynamic_source()
             path_yaml = pre_check() # pre_check returns relative path
             self.sub_update(url_list, path_yaml)
             # 2. Merge Sub

@@ -73,6 +73,41 @@ web_pages:
 
 ---
 
+## 4.1) 动态日期链接源
+
+```yaml
+dynamic_source:
+  enabled: true
+  templates:
+    - "https://aa.mibei77.com/{YYYY}{MM}/{MM}{DD}Clashila.yaml"
+    - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
+  max_days_back: 30
+  timeout: 10
+  output_file: sub/dynamic_url.txt
+  timezone: ""
+```
+
+按当天日期替换模板占位符后请求，若取不到有效节点则日期往前退一天重试。配置多个模板时，**每个模板各自独立回溯**，互不影响。
+
+| 占位符 | 含义 | 2026-10-05 时 |
+|---|---|---|
+| `{YYYY}` | 四位年 | `2026` |
+| `{MM}` | 两位月（补零） | `10` |
+| `{M}` | 月（不补零） | `10` |
+| `{DD}` | 两位日（补零） | `05` |
+| `{D}` | 日（不补零） | `5` |
+
+- `enabled`：是否启用。
+- `templates`：链接模板列表，可填多个，每个都必须包含至少一个占位符。
+- `max_days_back`：最多向前回退的天数，防止无限重试。
+- `timeout`：单次请求超时（秒）。
+- `output_file`：命中的链接写入此文件（每行一个）。
+- `timezone`：留空使用运行环境本地时间；可填 `Asia/Shanghai`。GitHub Actions runner 默认是 UTC。
+
+「有效」的判定：HTTP 200 且能从内容中解析出至少 1 个节点（支持明文分享链接、Base64 订阅、Clash YAML）。
+
+---
+
 ## 5) 订阅转换后端（Subconverter）
 
 ```yaml
