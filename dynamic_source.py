@@ -3,12 +3,19 @@
 """按日期模板生成链接，并从当天开始逐日回退，直到取到有效节点。"""
 import base64
 import datetime
+import gzip
 import re
 
 import requests
 from loguru import logger
 
 from clash_parser import clash_yaml_to_links
+
+_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': '*/*',
+}
 
 
 def format_template(template, day):
@@ -53,16 +60,32 @@ def _extract_nodes(text, node_pattern):
     return nodes
 
 
+def _decode_body(response):
+    """取原始字节解码，兼容 .gz 文件和常见中文编码。"""
+    raw = response.content or b''
+    if raw[:2] == b'\x1f\x8b':
+        try:
+            raw = gzip.decompress(raw)
+        except OSError:
+            return ''
+    for encoding in ('utf-8', 'gbk'):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode('utf-8', errors='ignore')
+
+
 def _fetch_nodes(url, node_pattern, timeout):
     try:
-        response = requests.get(url, timeout=timeout)
+        response = requests.get(url, headers=_HEADERS, timeout=timeout)
     except requests.RequestException as e:
         logger.warning(f'动态链接请求失败: {url} ({type(e).__name__})')
         return set()
     if response.status_code != 200:
         logger.info(f'动态链接状态码 {response.status_code}: {url}')
         return set()
-    text = response.text or ''
+    text = _decode_body(response)
     if not text.strip():
         logger.info(f'动态链接内容为空: {url}')
         return set()
