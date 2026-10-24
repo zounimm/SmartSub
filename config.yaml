@@ -38,6 +38,9 @@ dynamic_source:
 
 # Telegram 频道配置
 tgchannel:
+  # 自己新加
+  - https://:t.me/clashv8
+  # 其他人的
   - https://t.me/WFVPN
   - https://t.me/ripaojiedian
   - https://t.me/FProxies
@@ -184,9 +187,19 @@ tgchannel:
   - https://t.me/AlienVPN402
   - https://t.me/V2rayngninja
   - https://t.me/iSegaro
+  
 
 # 直连订阅源 (Direct Subscription URLs) - GitHub/Websites
 subscribe:
+  # 自己加的
+  - https://www.gitlabip.xyz/Alvin9999/PAC/refs/heads/master/backup/img/1/2/ipp/quick/1/config.yaml
+  - https://openproxylist.com/v2ray/rawlist/text
+  - https://openproxylist.com/v2ray/rawlist/subscribe
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/V2RAY_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/HTTPS_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/SOCKS4_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/SOCKS5_RAW.txt
+  # 其他人
   - https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity
   - https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt
   - https://raw.githubusercontent.com/tbbatbb/Proxy/master/dist/v2ray.config.txt
@@ -215,6 +228,8 @@ subconverter_backends:
 # 网页模糊抓取源 (Web Page Fuzzing Sources)
 # 程序将访问这些网页，并提取其中的 http/https 链接作为订阅源
 web_pages:
+  - https://raw.githubusercontent.com/beck-8/sub-urls/refs/heads/main/%E9%AB%98%E5%A4%A7%E5%85%A8.txt
+  # 别人的
   - https://merlinblog.xyz/wiki/freess.html
   - https://fanqiangdang.com/forum-48-1.html
   - https://github.com/ermaozi/get_subscribe
