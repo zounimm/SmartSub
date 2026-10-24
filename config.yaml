@@ -1,18 +1,18 @@
-﻿# 性能配置
+# 性能配置
 performance:
-  max_workers: 32              # 最大并发线程数（根据机器性能调整）
-  content_limit_mb: 20          # 下载内容大小限制（MB）
-  request_timeout: 50           # 请求超时时间（秒）
+  max_workers: 32 # 最大并发线程数（根据机器性能调整）
+  content_limit_mb: 20 # 下载内容大小限制（MB）
+  request_timeout: 50 # 请求超时时间（秒）
 
 # 质量控制配置
 quality_control:
-  min_nodes: 1                 # 订阅最少节点数（少于此数量视为低质量）
+  min_nodes: 1 # 订阅最少节点数（少于此数量视为低质量）
   enable_duplicate_check: true # 启用内容去重（消除重复订阅）
-  enable_quality_check: true   # 启用质量检查（过滤空订阅和垃圾内容）
+  enable_quality_check: true # 启用质量检查（过滤空订阅和垃圾内容）
 
 # 节点配置
 nodes:
-  protocols:                   # 支持的节点协议
+  protocols: # 支持的节点协议
     - vmess
     - ss
     - trojan
@@ -28,14 +28,22 @@ nodes:
 # 当天链接取不到有效节点时，日期自动往前退一天重试，直到命中或达到 max_days_back
 dynamic_source:
   enabled: true
-  templates:                   # 可配置多个模板，各自独立按日期回溯
-    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
+  templates: # 可配置多个模板，各自独立按日期回溯
     - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
+    - "https://free.datiya.com/uploads/{YYYY}{MM}{DD}-clash.yaml"
+    # 网站地址：https://v2raywindows.github.io/free-nodes/
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/1-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/2-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/3-{YYYY}{MM}{DD}.txt"
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/4-{YYYY}{MM}{DD}.txt"
+    # GitHub项目：free-nodes/v2rayfree
+    - "https://raw.githubusercontent.com/free-nodes/v2rayfree/refs/heads/main/v{YYYY}{MM}{DD}"
     # - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
-  max_days_back: 30            # 最多向前回退多少天
-  timeout: 10                  # 单次请求超时(秒)
-  output_file: sub/dynamic_url.txt   # 命中的链接写入此文件(每行一个)
-  timezone: ""                 # 留空=运行环境本地时间；可填 Asia/Shanghai
+  max_days_back: 30 # 最多向前回退多少天
+  timeout: 30 # 单次请求超时(秒)
+  output_file: sub/dynamic_url.txt # 命中的链接写入此文件(每行一个)
+  timezone: "Asia/Shanghai" # 留空=运行环境本地时间；可填 Asia/Shanghai
 
 # Telegram 频道配置
 tgchannel:
@@ -77,9 +85,9 @@ tgchannel:
   #- https://t.me/sharingnode      #节点地址http://file.52nfw.cn/word/obtain.php?user=111111&id=1
   #- https://t.me/aifenxiang2020   #分享的是节点信息
   #- https://t.me/ssrList          #分享的是节点信息，https://fanqiangdang.com提供
-  - https://t.me/mftizi           #分享的是节点信息
+  - https://t.me/mftizi #分享的是节点信息
   #- https://t.me/vmess_tg         #有源，有节点
-  - https://t.me/freev2rays       #分享的是节点信息
+  - https://t.me/freev2rays #分享的是节点信息
   #- https://t.me/v2list           #分享的是节点信息，https://fanqiangdang.com提供
   #下面是自己添加的，好像都是分享的节点信息，订阅源抓不到
   - https://t.me/yaney_01
@@ -188,7 +196,6 @@ tgchannel:
   - https://t.me/AlienVPN402
   - https://t.me/V2rayngninja
   - https://t.me/iSegaro
-  
 
 # 直连订阅源 (Direct Subscription URLs) - GitHub/Websites
 subscribe:
@@ -246,24 +253,24 @@ sub_convert_apis:
 
 # 节点质量筛选配置 (Node Quality Filter)
 quality_filter:
-  max_workers: 32              # 并发测试线程数
-  connect_timeout: 5           # 连接超时时间(秒)
-  max_latency: 500             # 最大可接受延迟(毫秒)
-  min_speed: 0                 # 最小下载速度(KB/s)，0表示不测速
+  max_workers: 32 # 并发测试线程数
+  connect_timeout: 5 # 连接超时时间(秒)
+  max_latency: 500 # 最大可接受延迟(毫秒)
+  min_speed: 0 # 最小下载速度(KB/s)，0表示不测速
 
   # 大规模节点处理配置 - 精选高质量方案
-  max_test_nodes: 200000         # 最多测试节点数
-  max_output_nodes: 200000        # 输出200000个精选节点
-  min_guarantee: 50           # 保底50个节点
-  preferred_protocols_only: true  # 测试所有协议
-  smart_sampling: true         # 智能采样
+  max_test_nodes: 200000 # 最多测试节点数
+  max_output_nodes: 200000 # 输出200000个精选节点
+  min_guarantee: 50 # 保底50个节点
+  preferred_protocols_only: true # 测试所有协议
+  smart_sampling: true # 智能采样
 
   # 区域限制 (Region Limit) - 改为降分模式，不直接丢弃
   region_limit:
     enabled: true
-    policy: score              # 改为score模式：不在白名单的降分而不是丢弃
+    policy: score # 改为score模式：不在白名单的降分而不是丢弃
     # 白名单: 优选以下国家 (ISO 3166-1 alpha-2 代码)
-    allowed_countries: 
+    allowed_countries:
       - US # 美国
       - KR # 韩国
       - TW # 台湾
@@ -275,7 +282,7 @@ quality_filter:
       - CN # 中国
       - IR # 伊朗
       - RU # 俄罗斯
-      - KP # 朝鲜    
+      - KP # 朝鲜
   # 首选协议列表(优先级从高到低)
   preferred_protocols:
     - hysteria2
@@ -291,10 +298,10 @@ quality_filter:
 cn_probe:
   enabled: false
   results_path: sub/cn_probe.json
-  results_url: ""         # optional, can also set env CN_PROBE_URL
-  weight: 1.0             # multiplier for CN bonus
-  max_latency: 800        # ms threshold for penalty
-  max_bonus: 6            # max bonus points from CN latency
+  results_url: "" # optional, can also set env CN_PROBE_URL
+  weight: 1.0 # multiplier for CN bonus
+  max_latency: 800 # ms threshold for penalty
+  max_bonus: 6 # max bonus points from CN latency
 
 # 风险/钓鱼节点过滤（基于节点参数规则，默认只降分）
 # Dynamic blind probe head (optional)
@@ -302,8 +309,8 @@ dynamic_probe:
   enabled: true
   sample_size: 50
   min_success: 5
-  force_proxy: true       # force HTTP checks through proxy_url if set
-  proxy_url: ""           # e.g. http://127.0.0.1:7890 or socks5://127.0.0.1:1080
+  force_proxy: true # force HTTP checks through proxy_url if set
+  proxy_url: "" # e.g. http://127.0.0.1:7890 or socks5://127.0.0.1:1080
   supported_protocols:
     - vless
     - trojan
@@ -318,19 +325,19 @@ dynamic_probe:
 # CN test proxy (optional)
 cn_test_proxy:
   enabled: false
-  type: api                # api (recommended) / http (standard HTTP proxy)
-  api_url: ""              # e.g. https://cn-probe.example.com/probe
-  api_token: ""            # optional Bearer token
-  proxy_url: ""            # e.g. http://user:pass@host:port or socks5://host:port
+  type: api # api (recommended) / http (standard HTTP proxy)
+  api_url: "" # e.g. https://cn-probe.example.com/probe
+  api_token: "" # optional Bearer token
+  proxy_url: "" # e.g. http://user:pass@host:port or socks5://host:port
   timeout: 8
   test_url: "https://www.google.com/generate_204"
   expected_status: 204
-  required: true           # if true, fail CN test -> drop node
+  required: true # if true, fail CN test -> drop node
 
 # Third-party CN probe API (optional)
 cn_probe_api:
   enabled: false
-  url_template: ""         # e.g. https://api.example.com/probe?host={host}&port={port}
+  url_template: "" # e.g. https://api.example.com/probe?host={host}&port={port}
   method: GET
   timeout: 8
   headers: {}
@@ -344,11 +351,11 @@ cn_probe_api:
 
 risk_filter:
   enabled: true
-  mode: score            # score(降分) / filter(直接丢弃)
-  penalty: 6             # 每触发一条规则扣分
-  max_penalty: 18        # 最大扣分上限
-  max_path_len: 120      # path 最大长度限制
-  suspicious_tlds:       # 可疑TLD后缀，触发风险扣分
+  mode: score # score(降分) / filter(直接丢弃)
+  penalty: 6 # 每触发一条规则扣分
+  max_penalty: 18 # 最大扣分上限
+  max_path_len: 120 # path 最大长度限制
+  suspicious_tlds: # 可疑TLD后缀，触发风险扣分
     - tk
     - xyz
     - top
@@ -361,7 +368,7 @@ risk_filter:
     - ml
     - ga
     - cf
-  phishing_keywords:     # 钓鱼关键词，触发风险扣分
+  phishing_keywords: # 钓鱼关键词，触发风险扣分
     - login
     - verify
     - account
@@ -372,7 +379,7 @@ risk_filter:
     - update
     - support
     - auth
-  allow_sni_domains: []  # SNI 白名单域名
+  allow_sni_domains: [] # SNI 白名单域名
   allow_host_domains: [] # Host 白名单域名
   allow_path_keywords: [] # Path 白名单关键词
   block_on:
@@ -384,16 +391,17 @@ risk_filter:
 
 # IP风险/纯净度检测 (IP Risk Check) - 评分模式
 ip_risk_check:
-  enabled: true              # 开启高质量IP检测
-  provider: ipapi            # 提供商: ipapi (免Key) 或 abuseipdb (需Key，更精准)
+  enabled: true # 开启高质量IP检测
+  provider: ipapi # 提供商: ipapi (免Key) 或 abuseipdb (需Key，更精准)
   # check_top_nodes: 999999999      # 检测Top 300节点 (约需7分钟，平衡速度与覆盖率)  。不配置就不限制。
 
   # 并发检测配置
-  max_workers: 8             # 并发数：同时进行检测的节点数量
-  request_interval: 1.4      # 两次请求之间的最小间隔(秒)，0 = 不限制
-                             # ip-api 免费版限制 45 次/分钟，1.4 秒约等于该上限
-                             # 使用付费 Key / 自建代理时可设为 0，获得最大速度
-  timeout: 5                 # 单次请求超时(秒)
+  max_workers: 8 # 并发数：同时进行检测的节点数量
+  request_interval:
+    1.4 # 两次请求之间的最小间隔(秒)，0 = 不限制
+    # ip-api 免费版限制 45 次/分钟，1.4 秒约等于该上限
+    # 使用付费 Key / 自建代理时可设为 0，获得最大速度
+  timeout: 5 # 单次请求超时(秒)
 
   # ipapi 行为策略 - 决定如何判断IP纯净度
   # 🔄 新模式：评分模式（降分但不淘汰节点）
@@ -402,32 +410,32 @@ ip_risk_check:
     # true  = 机房IP风险值50，降5分（仍会保留）
     # false = 机房IP不降分
     # 说明：大多数免费节点都是机房IP，设为true会降分但不淘汰
-    exclude_hosting: true    # ✅ 机房IP降分（风险值50，-5分）
+    exclude_hosting: true # ✅ 机房IP降分（风险值50，-5分）
 
     # exclude_proxy: 是否对被标记为代理的IP降分
     # true  = 代理IP风险值60，降3分
     # false = 代理IP不降分
     # 推荐：false（代理节点本身就是我们需要的）
-    exclude_proxy: false     # ✅ 允许代理IP（不降分）
+    exclude_proxy: false # ✅ 允许代理IP（不降分）
 
     # exclude_mobile: 是否对移动网络IP降分
     # true  = 移动IP风险值30，降2分
     # false = 移动IP不降分
-    exclude_mobile: false    # ✅ 允许移动网络（不降分）
+    exclude_mobile: false # ✅ 允许移动网络（不降分）
 
   # 以下仅 AbuseIPDB 生效 (需要API Key)
-  max_risk_score: 50         # 最大风险评分，超过此值的节点会被降分
-  api_key: ""                # AbuseIPDB API Key (留空则使用ipapi)
+  max_risk_score: 50 # 最大风险评分，超过此值的节点会被降分
+  api_key: "" # AbuseIPDB API Key (留空则使用ipapi)
 
   # ASN/ISP/ORG 黑名单（仅 ipapi 模式生效）
   asn_filter:
     enabled: true
-    mode: score              # score(降分) / filter(直接丢弃)
-    penalty: 10              # 命中黑名单扣分
-    asn_blacklist: []        # 如 ["AS13335","4134","AS9009"]
-    org_blacklist_keywords:  # 如 ["banned", "bulletproof"]
+    mode: score # score(降分) / filter(直接丢弃)
+    penalty: 10 # 命中黑名单扣分
+    asn_blacklist: [] # 如 ["AS13335","4134","AS9009"]
+    org_blacklist_keywords: # 如 ["banned", "bulletproof"]
       []
-    isp_blacklist_keywords:  # 如 ["cloudflare", "amazon"]
+    isp_blacklist_keywords: # 如 ["cloudflare", "amazon"]
       []
 
 # 📊 风险值说明：
