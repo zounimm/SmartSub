@@ -1,13 +1,12 @@
 https://aa.mibei77.com/202610/10.2464babge.txt
 https://free.datiya.com/uploads/20261024-clash.yaml
-https://node.freeclashnode.com/uploads/2026/10/0-20261024.txt
-https://node.freeclashnode.com/uploads/2026/10/1-20261024.txt
-https://node.freeclashnode.com/uploads/2026/10/2-20261024.txt
-https://node.freeclashnode.com/uploads/2026/10/3-20261024.txt
-https://node.freeclashnode.com/uploads/2026/10/4-20261024.txt
+https://node.freeclashnode.com/uploads/2026/10/0-20261025.txt
+https://node.freeclashnode.com/uploads/2026/10/1-20261025.txt
+https://node.freeclashnode.com/uploads/2026/10/2-20261025.txt
+https://node.freeclashnode.com/uploads/2026/10/3-20261025.txt
+https://node.freeclashnode.com/uploads/2026/10/4-20261025.txt
 https://raw.githubusercontent.com/free-nodes/v2rayfree/refs/heads/main/v20261024
 https://sub.danhu.ddns-ip.net/paste/A251001N1rhoxeHA/base64
-https://sub.danhu.ddns-ip.net/paste/B250719Nk7jZ2x1c/base64
 https://sub.danhu.ddns-ip.net/paste/B250801N3NYIThkB/base64
 https://sub.danhu.ddns-ip.net/paste/B250901NyrjIGqKc/base64
 https://sub.danhu.ddns-ip.net/paste/B250920NXFUDdV0a/base64
@@ -22,3 +21,4 @@ https://sub.danhu.dpdns.org/paste/TG@FProxies260418lS7REjs/base64
 https://sub.danhu.dpdns.org/paste/TG@FProxies260627oX3VJoI/base64
 https://sub.danhu.dpdns.org/paste/TG@FProxies260731AVXPjtI/base64
 https://sub.danhu.dpdns.org/paste/TG@FProxies260822Y4qC45A/base64
+https://sub.danhu.dpdns.org/paste/TG@FProxies261024fhU8Dbp/base64
