@@ -17,6 +17,7 @@ SmartSub 旨在为您提供最纯净、稳定的代理体验。它能自动遍�
 - ✅ **智能提取**：深度解析页面内容，自动识别 `vmess://`, `ss://`, `trojan://`, `vless://`, `hysteria2://`, `hysteria://`, `tuic://`, `anytls://` 等协议，并支持把 Clash/Mihomo YAML 订阅的 `proxies` 转换成节点
 - ✅ **去重机制**：基于 MD5 和节点参数的智能去重，消除重复订阅
 - ✅ **GitHub 用户去重**：同一 GitHub 用户的多个订阅链接仅保留一个，减少噪音
+- ✅ **动态日期链接**：按日期模板生成订阅链接（`{YYYY}` `{YY}` `{MM}` `{M}` `{DD}` `{D}`），当天取不到就自动往前回退一天，支持配置多个模板
 - ✅ **安全防护**：内置 SSRF 防护机制，防止恶意请求内网地址
 
 ### 🎯 深度质量控制 (NEW!)
@@ -127,6 +128,39 @@ subscribe:
 web_pages:
   - https://example.com/free-vpn-list
 ```
+
+### 动态日期链接源 (Dynamic Dated Source)
+
+有些站点的订阅地址按日期分目录，例如 `.../uploads/2026/10/0-20261024.txt`。把日期部分写成占位符，程序会按当天日期生成链接并抓取；当天取不到有效节点时，自动往前回退一天重试。
+
+```yaml
+dynamic_source:
+  enabled: true
+  templates:                   # 可配置多个，各自独立回溯
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
+    - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
+  max_days_back: 30            # 最多向前回退多少天
+  timeout: 10                  # 单次请求超时（秒）
+  output_file: sub/dynamic_url.txt   # 命中的链接写入此文件（每行一个）
+  timezone: "Asia/Shanghai"    # 留空=运行环境本地时间
+```
+
+**支持的占位符**（以 2026-10-05 为例）：
+
+| 占位符 | 含义 | 结果 |
+|---|---|---|
+| `{YYYY}` | 四位年 | `2026` |
+| `{YY}` | 两位年 | `26` |
+| `{MM}` | 两位月（补零） | `10` |
+| `{M}` | 月（不补零） | `10` |
+| `{DD}` | 两位日（补零） | `05` |
+| `{D}` | 日（不补零） | `5` |
+
+**回溯行为**：每个模板从当天开始独立向前查找，直到某天的链接能解析出至少 1 个节点为止，最多回退 `max_days_back` 天。多个模板互不影响，命中的链接全部写入 `sub/dynamic_url.txt`。
+
+**有效性判定**：HTTP 200 且内容中能解析出节点（支持明文分享链接、Base64 订阅、Clash YAML，也能处理 gzip 压缩的响应）。
+
+> ⚠️ GitHub Actions runner 默认是 UTC 时区，建议把 `timezone` 设为 `Asia/Shanghai`，否则北京时间 0:00–8:00 运行时会取到前一天。
 
 ### 性能配置
 
@@ -296,6 +330,7 @@ subconverter_backends:
 | `sub_all_sub_store.txt` | Sub-Store 专用格式（区分机场与开心玩耍） |
 | `YYYY/MM/D-DD.yaml` | 按日期归档的每日抓取结果 |
 | `sub/all_nodes.txt` | ⭐ **全量节点快照**（抓取完立即生成，未筛选，含项目未支持的协议，可自行下载测试） |
+| `sub/dynamic_url.txt` | 动态日期链接源命中的链接（每行一个） |
 | `sub/high_quality_nodes.txt` | ⭐ **高质量筛选节点**（经过连通性、延迟、IP风险检测） |
 | `runtime/quality_report.json` | 节点质量分析报告（包含统计数据） |
 
