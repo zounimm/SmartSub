@@ -52,9 +52,9 @@ dynamic_source:
 # Telegram 频道配置
 tgchannel:
   # 自己新加
-  - https://:t.me/clashv8
-  - https://:t.me/wzmfjd
-  - https://:t.me/FProxies
+  - https://t.me/clashv8
+  - https://t.me/wzmfjd
+  - https://t.me/FProxies
   # 其他人的
   - https://t.me/WFVPN
   - https://t.me/ripaojiedian
