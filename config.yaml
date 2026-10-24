@@ -24,6 +24,9 @@ nodes:
 
 # Telegram 频道配置
 tgchannel:
+  # 自己新加
+  - https://:t.me/clashv8
+  # 其他人的
   - https://t.me/WFVPN
   - https://t.me/ripaojiedian
   - https://t.me/FProxies
@@ -170,10 +173,18 @@ tgchannel:
   - https://t.me/AlienVPN402
   - https://t.me/V2rayngninja
   - https://t.me/iSegaro
-  - https://:t.me/clashv8
+  
 
 # 直连订阅源 (Direct Subscription URLs) - GitHub/Websites
 subscribe:
+  # 自己加的
+  - https://openproxylist.com/v2ray/rawlist/text
+  - https://openproxylist.com/v2ray/rawlist/subscribe
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/V2RAY_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/HTTPS_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/SOCKS4_RAW.txt
+  - https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/SOCKS5_RAW.txt
+  # 其他人
   - https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity
   - https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt
   - https://raw.githubusercontent.com/tbbatbb/Proxy/master/dist/v2ray.config.txt
