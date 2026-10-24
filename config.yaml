@@ -29,7 +29,7 @@ nodes:
 dynamic_source:
   enabled: true
   templates: # 可配置多个模板，各自独立按日期回溯
-    - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
+    - "https://aa.mibei77.com/{YYYY}{MM}/{MM}.{DD}64babge.txt"
     - "https://free.datiya.com/uploads/{YYYY}{MM}{DD}-clash.yaml"
     # 网站地址：https://v2raywindows.github.io/free-nodes/
     - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
