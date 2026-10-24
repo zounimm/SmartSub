@@ -24,11 +24,12 @@ nodes:
 
 # 动态日期链接源 (Dynamic dated source)
 # 模板里的占位符会按当天日期替换：
-#   {YYYY}=2026  {MM}=10  {M}=10  {DD}=24  {D}=24
+#   {YYYY}=2026  {YY}=26  {MM}=10  {M}=10  {DD}=24  {D}=24
 # 当天链接取不到有效节点时，日期自动往前退一天重试，直到命中或达到 max_days_back
 dynamic_source:
   enabled: true
   templates:                   # 可配置多个模板，各自独立按日期回溯
+    - "https://node.freeclashnode.com/uploads/{YYYY}/{MM}/0-{YYYY}{MM}{DD}.txt"
     - "https://aa.mibei77.com/{YYYY}{MM}/{YY}.{DD}64babge.txt"
     # - "https://bb.example.com/{YYYY}/{MM}/{DD}/nodes.yaml"
   max_days_back: 30            # 最多向前回退多少天

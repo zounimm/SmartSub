@@ -19,9 +19,10 @@ _HEADERS = {
 
 
 def format_template(template, day):
-    """把 {YYYY}/{MM}/{M}/{DD}/{D} 替换成指定日期。"""
+    """把 {YYYY}/{YY}/{MM}/{M}/{DD}/{D} 替换成指定日期。"""
     return (template
             .replace('{YYYY}', f'{day.year:04d}')
+            .replace('{YY}', f'{day.year % 100:02d}')
             .replace('{MM}', f'{day.month:02d}')
             .replace('{M}', str(day.month))
             .replace('{DD}', f'{day.day:02d}')
