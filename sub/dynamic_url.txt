@@ -3,8 +3,8 @@ https://free.datiya.com/uploads/20261026-clash.yaml
 https://node.freeclashnode.com/uploads/2026/10/0-20261026.txt
 https://node.freeclashnode.com/uploads/2026/10/1-20261026.txt
 https://node.freeclashnode.com/uploads/2026/10/2-20261026.txt
-https://node.freeclashnode.com/uploads/2026/10/3-20261026.txt
-https://node.freeclashnode.com/uploads/2026/10/4-20261026.txt
+https://node.freeclashnode.com/uploads/2026/10/3-20261027.txt
+https://node.freeclashnode.com/uploads/2026/10/4-20261027.txt
 https://raw.githubusercontent.com/free-nodes/v2rayfree/refs/heads/main/v20261026
 https://sub.danhu.ddns-ip.net/paste/A251001N1rhoxeHA/base64
 https://sub.danhu.ddns-ip.net/paste/B250801N3NYIThkB/base64
